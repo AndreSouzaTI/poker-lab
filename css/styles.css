@@ -88,3 +88,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}
 .dlg-b dd{margin:2px 0 0 0;color:#c9d1d9}
 table.rk{border-collapse:collapse;width:100%;font-size:13px}
 table.rk td{border-bottom:1px solid var(--line);padding:5px 6px}
+.seat.empty .box{opacity:.35;border-style:dashed;color:var(--mute);font-size:12px}
+.stybox{background:#1f1a2e;border:1px solid #4b3a7a;border-radius:8px;padding:6px 8px;margin-bottom:6px;font-size:13px}
+ol.l{margin:4px 0;padding-left:20px}ol.l li{margin:2px 0}
+dialog h2{font-size:20px}

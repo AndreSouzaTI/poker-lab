@@ -2,7 +2,8 @@
    Sem DOM: roda no navegador e no Node (testes). */
 "use strict";
 const SUITS=['♠','♥','♦','♣'];
-const BB=2, SBL=1, START=200, N=6;
+let BB=2, SBL=1, ANTE=0;          // blinds variam no torneio
+const START=200, N=6;
 const rk=c=>(c>>2)+2, su=c=>c&3;
 const RCH=r=>({14:'A',13:'K',12:'Q',11:'J',10:'T'})[r]||String(r);
 const RDISP=r=>r===10?'10':RCH(r);
@@ -160,4 +161,54 @@ function summarizeLabels(labels){
 }
 
 
-if(typeof module!=="undefined"&&module.exports){module.exports={SUITS,BB,rk,su,evaluate,describe,straightHigh,equity,chen,notation,isPair,handClass,tier,texture,drawsOf,relHand,calcOuts,beatAnalysis,summarizeLabels,CAT,OPEN_TH};}
+/* ============ RANKING DAS 169 MÃOS E RANGES ============ */
+// Força aproximada = equidade (%) contra 1 mão aleatória. Pares: valores conhecidos; demais: ajuste linear.
+const PAIR_EQ={14:85.2,13:82.4,12:79.9,11:77.5,10:75.1,9:72.1,8:69.1,7:66.2,6:63.3,5:60.3,4:57.0,3:53.7,2:50.3};
+function handScore(hi,lo,suited){
+  if(hi===lo) return PAIR_EQ[hi];
+  const g=hi-lo-1; let s=10.5+2.91*hi+0.945*lo+(g===0?1.5:g===1?1:g===2?.5:0);
+  return suited?s+3.2:s;
+}
+const HANDS169=(()=>{const L=[];
+  for(let hi=14;hi>=2;hi--) for(let lo=hi;lo>=2;lo--){
+    if(hi===lo) L.push({key:RCH(hi)+RCH(lo),hi,lo,suited:false,pair:true,combos:6,score:handScore(hi,lo,false)});
+    else{L.push({key:RCH(hi)+RCH(lo)+'s',hi,lo,suited:true,combos:4,score:handScore(hi,lo,true)});
+         L.push({key:RCH(hi)+RCH(lo)+'o',hi,lo,suited:false,combos:12,score:handScore(hi,lo,false)});}}
+  L.sort((a,b)=>b.score-a.score); let cum=0;
+  L.forEach(h=>{h.from=cum/1326;cum+=h.combos;h.to=cum/1326;}); return L;})();
+const HAND_BY_KEY=Object.fromEntries(HANDS169.map(h=>[h.key,h]));
+/** Percentil da mão: 0.02 = está entre as 2% melhores. */
+function handPct(hole){return HAND_BY_KEY[notation(hole)].to;}
+/** Todas as combinações (pares de cartas) das mãos no top `pct`, sem cartas mortas. */
+function rangeCombos(pct,dead){
+  const out=[];
+  for(const h of HANDS169){ if(h.from>=pct) break;
+    for(let s1=0;s1<4;s1++) for(let s2=0;s2<4;s2++){
+      if(h.pair){ if(s2<=s1) continue; } else if(h.suited){ if(s1!==s2) continue; } else if(s1===s2) continue;
+      const a=(h.hi-2)*4+s1, b=(h.lo-2)*4+s2;
+      if(!dead.has(a)&&!dead.has(b)) out.push([a,b]); } }
+  return out;
+}
+/** Equidade (Monte Carlo) contra adversários com ranges estimados (ex.: [0.15, 1] = top 15% e qualquer mão). */
+function equityVsRanges(hole,board,ranges,iters){
+  if(!ranges.length) return 1;
+  const dead=new Set(hole.concat(board)), lists=ranges.map(r=>rangeCombos(Math.min(1,Math.max(r,.003)),dead));
+  if(lists.some(l=>!l.length)) return equity(hole,board,ranges.length,iters);
+  const deck=[]; for(let c=0;c<52;c++) if(!dead.has(c)) deck.push(c);
+  const need=5-board.length; let score=0,n=0;
+  for(let it=0;it<iters;it++){
+    const used=new Set(), opp=[]; let ok=true;
+    for(const l of lists){ let got=null;
+      for(let t=0;t<12;t++){const h=l[Math.floor(Math.random()*l.length)]; if(!used.has(h[0])&&!used.has(h[1])){got=h;break;}}
+      if(!got){ok=false;break;} used.add(got[0]);used.add(got[1]);opp.push(got); }
+    if(!ok) continue;
+    const b=board.slice();
+    while(b.length<board.length+need){const c=deck[Math.floor(Math.random()*deck.length)]; if(!used.has(c)){used.add(c);b.push(c);}}
+    const hv=evaluate(hole.concat(b)).v; let lose=false,ties=0;
+    for(const o of opp){const ov=evaluate(o.concat(b)).v; if(ov>hv){lose=true;break;} if(ov===hv)ties++;}
+    n++; if(!lose) score+=1/(ties+1);
+  }
+  return n?score/n:equity(hole,board,ranges.length,iters);
+}
+
+if(typeof module!=="undefined"&&module.exports){module.exports={SUITS,BB,rk,su,evaluate,describe,straightHigh,equity,chen,notation,isPair,handClass,tier,texture,drawsOf,relHand,calcOuts,beatAnalysis,summarizeLabels,CAT,OPEN_TH,handScore,HANDS169,handPct,rangeCombos,equityVsRanges};}

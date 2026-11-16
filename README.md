@@ -20,15 +20,28 @@ A No-Limit Texas Hold'em table (6-max) where you play against 5 AI opponents and
 ### 🎯 Training mode
 Just you against the machine: blinds 1/2, 200-chip stacks, the dealer button moves each hand, side pots and all-ins work, and busted players rebuy automatically.
 
+### 🏆 Tournament mode (MTT)
+A simulated multi-table tournament, from the opening level to the final table:
+
+- **Field sizes:** Sit & Go (6), small (18), Open (36) or Big Open (72), with turbo, normal or deep blind speeds
+- **Real structure:** 10,000 starting chips (100 BB), rising blind levels and a **BB ante** from level 3
+- **Living tournament:** the other tables are simulated hand by hand (all-ins use real cards), players bust, **tables break and get balanced**, and new opponents sit at your table
+- **Bubble, ITM and final table**, a payout table (≈14% of the field paid) and a final ranking
+- If you bust, you can **simulate the rest** and see who won
+- Your tournament history: played, ITM %, best finish and profit
+
+Opponents use a **pro-style AI**: position-based opening ranges from a ranked list of all 169 starting hands, 3-bets (including suited-ace bluffs), **push/fold** with short stacks, re-shoves, c-bets sized by board texture, semi-bluffs, SPR awareness and **bubble pressure (ICM)**. Each opponent has a profile — regular TAG, regular LAG, nit, recreational or maniac. The same AI can be turned on in cash games ("IA profissional").
+
 ### 🎓 Learning mode
-On every decision, a coach panel shows:
+Choose **the style you want to learn** — TAG, LAG, Nit, Passive (Rock) or Balanced (GTO-style) — and the coach recommends and explains plays the way that style would, with its VPIP/PFR targets. On every decision, a coach panel shows:
 
 | Panel | What it tells you |
 |---|---|
 | **Position** | What UTG, MP, CO, BTN, SB and BB mean, and roughly how many hands to play from each |
 | **Your hand** | Pre-flop: Chen score, hand type (suited, connectors, broadway) and nicknames (Pocket Rockets, Cowboys, Big Slick…). Post-flop: top pair, overpair, set vs trips, flush draw, open-ended, gutshot |
 | **Board texture** | Dry, wet, paired, monotone, connected |
-| **Equity & pot odds** | Your chance of winning (Monte Carlo, 2,000 runs) against the pot odds you are being offered |
+| **Equity & pot odds** | Your chance of winning (Monte Carlo) against each opponent's **estimated range** (read from their actions: "opened from UTG = top 17%") and against random hands, compared with the pot odds |
+| **Tournament spot** | Effective stack in BB, Harrington's M and zone, push/fold ranges and bubble/ICM warnings |
 | **Outs** | Which cards improve you, grouped by hand, with the rule of 4 and 2 |
 | **Recommended play** | Fold / check / call / bet / raise, the size, and *why* |
 | **Hands that beat you** | Every possible opponent combination checked against yours, grouped ("any Kx", "two hearts"…) |
@@ -55,8 +68,12 @@ Hands, win rate, BB/100, VPIP, PFR, showdowns won, how often you agreed with the
 | Equity | [`js/engine.js`](js/engine.js) | Monte Carlo: deals the unknown cards thousands of times with a partial Fisher–Yates shuffle |
 | Pre-flop strength | [`js/engine.js`](js/engine.js) | Chen formula + opening thresholds per position |
 | "Hands that beat you" | [`js/engine.js`](js/engine.js) | Exhaustive check of all ~1,081 opponent combinations |
-| Betting engine | [`js/game.js`](js/game.js) | State machine for streets, minimum raises, all-ins and side pots built from contribution levels |
-| Bots | [`js/game.js`](js/game.js) | Five profiles with different looseness, aggression and bluff frequency; post-flop decisions use equity vs pot odds |
+| Hand ranking & ranges | [`js/engine.js`](js/engine.js) | All 169 starting hands ranked by strength; "top X%" ranges expanded into card combinations, minus dead cards |
+| Equity vs ranges | [`js/engine.js`](js/engine.js) | Monte Carlo where each opponent's hand is sampled from their estimated range |
+| Betting engine | [`js/game.js`](js/game.js) | State machine for streets, minimum raises, all-ins, heads-up blinds, empty seats, BB ante and side pots built from contribution levels |
+| Pro AI | [`js/ai.js`](js/ai.js) | Position ranges, range reading, push/fold, 3-bet/4-bet, c-bet, semi-bluff, SPR and bubble pressure; five opponent profiles and five coach styles |
+| Tournament | [`js/tournament.js`](js/tournament.js) | Blind levels, seating, background tables, table breaking/balancing, payouts, bubble and final table |
+| Classic bots | [`js/game.js`](js/game.js) | The original five simple cash-game personalities |
 | Sound | [`js/audio.js`](js/audio.js) | Oscillators and filtered noise from the Web Audio API |
 
 No build step, no framework, no dependencies: plain HTML, CSS and JavaScript.
@@ -95,7 +112,7 @@ This project is open to ideas. If you play poker (or just tried it) and somethin
 
 There is also a **💡 Sugerir melhoria** button inside the game.
 
-Ideas already on my list: tournament mode with rising blinds, hand-history replay, range charts per position, and an English translation.
+Ideas already on my list: hand-history replay, range charts per position, a full ICM calculator and an English translation.
 
 ---
 
@@ -104,7 +121,8 @@ Ideas already on my list: tournament mode with rising blinds, hand-history repla
 **Poker Lab** é uma mesa de Texas Hold'em No-Limit (6 jogadores) para treinar contra 5 IAs. Fiz para **aprender poker de verdade** e **treinar as tecnologias usadas** (JavaScript puro, simulação Monte Carlo, Web Audio API e máquina de estados).
 
 - **Modo Treino:** só jogar contra a máquina.
-- **Modo Aprendizado:** coach com posição, força da mão, textura da mesa, equidade, pot odds, outs, jogada recomendada e as mãos que te batem, usando os termos que a galera usa (trinca, set, c-bet, nuts…).
+- **Modo Torneio:** do Open à mesa final — blinds subindo com ante, outras mesas simuladas, quebra e balanceamento de mesas, bolha, premiação e IA jogando como profissionais (ranges por posição, push/fold, ICM).
+- **Modo Aprendizado:** escolha o estilo que quer aprender (TAG, LAG, Nit, Passivo ou Equilibrado) e o coach ensina daquele jeito: posição, força da mão, textura da mesa, equidade contra o range dos adversários, pot odds, outs, jogada recomendada e as mãos que te batem, usando os termos que a galera usa (trinca, set, c-bet, nuts…).
 - **Estatísticas:** VPIP, PFR, BB/100, erros mais comuns e as mãos que mais te custaram.
 
 **Jogue:** https://andresouzati.github.io/poker-lab/ · **Sugestões são muito bem-vindas:** abra uma [issue](https://github.com/AndreSouzaTI/poker-lab/issues/new/choose).

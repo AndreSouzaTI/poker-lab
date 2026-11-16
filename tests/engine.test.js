@@ -65,6 +65,25 @@ test('outs: flush draw no flop tem 9 outs para flush', () => {
   assert.equal(o.groups[5].length, 9);
 });
 
+test('ranking das 169 mãos: 1326 combinações, AA no topo, 72o no fim', () => {
+  assert.equal(E.HANDS169.length, 169);
+  assert.equal(E.HANDS169.reduce((a, h) => a + h.combos, 0), 1326);
+  assert.equal(E.HANDS169[0].key, 'AA');
+  assert.ok(E.handPct(c('As Ah')) < 0.01);
+  assert.ok(E.handPct(c('Ks Qs')) < E.handPct(c('Kd Qc')));
+  assert.ok(E.handPct(c('7s 2h')) > 0.9);
+});
+
+test('rangeCombos: top 1% = AA e KK (12 combos) e respeita cartas mortas', () => {
+  assert.equal(E.rangeCombos(0.009, new Set()).length, 12);
+  assert.equal(E.rangeCombos(0.009, new Set(c('As'))).length, 9);
+});
+
+test('equidade contra range: KK contra só AA fica perto de 18%', () => {
+  const eq = E.equityVsRanges(c('Ks Kh'), [], [0.004], 3000);
+  assert.ok(eq > 0.13 && eq < 0.24, `equidade ${eq}`);
+});
+
 test('nuts: ninguém bate o royal flush', () => {
   const b = E.beatAnalysis(c('Ah Kh'), c('Qh Jh Th 2c 3d'));
   assert.equal(b.beat, 0);

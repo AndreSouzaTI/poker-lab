@@ -23,6 +23,8 @@ index.html         page markup
 css/styles.css     styles
 js/engine.js       pure poker logic (no DOM) — also loaded by the tests
 js/audio.js        Web Audio sound effects
-js/game.js         table state, betting, bots, coach and UI
+js/ai.js           pro-style AI, range reading, opponent profiles and coach styles
+js/tournament.js   tournament structure, background tables, balancing and payouts
+js/game.js         table state, betting, classic bots, coach and UI
 tests/             node:test unit tests for the engine
 ```

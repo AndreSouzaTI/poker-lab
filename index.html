@@ -9,11 +9,25 @@
 <body>
 <header>
   <div class="logo">♠ Poker <b>Lab</b></div>
+  <div class="seg" id="gameSeg">
+    <button data-g="cash" class="on">💵 Cash</button>
+    <button data-g="mtt">🏆 Torneio</button>
+  </div>
   <div class="seg" id="modeSeg">
     <button data-m="treino">🎯 Treino</button>
     <button data-m="learn" class="on">🎓 Aprendizado</button>
   </div>
-  <label class="chk coach-only"><input type="checkbox" id="xray"> Raio-X (ver cartas da IA)</label>
+  <label class="chk coach-only">Estilo para aprender
+    <select id="coachStyle" class="btn" style="padding:4px 6px">
+      <option value="tag">TAG (Tight-Agressivo)</option>
+      <option value="lag">LAG (Loose-Agressivo)</option>
+      <option value="nit">Nit (Super tight)</option>
+      <option value="rock">Passivo (Rock)</option>
+      <option value="gto">Equilibrado (GTO)</option>
+    </select>
+  </label>
+  <label class="chk coach-only"><input type="checkbox" id="xray"> Raio-X</label>
+  <label class="chk" title="No cash game, os bots usam a IA profissional (ranges, push/fold, c-bet) em vez dos estilos simples"><input type="checkbox" id="proBots"> IA profissional</label>
   <label class="chk">Velocidade
     <select id="speed" class="btn" style="padding:4px 6px"><option value="1100">Lenta</option><option value="700" selected>Normal</option><option value="300">Rápida</option></select>
   </label>
@@ -56,8 +70,13 @@
   </section>
 
   <aside>
+    <div class="panel" id="tpanel" style="display:none">
+      <h3>🏆 Torneio</h3>
+      <div id="tbody"></div>
+    </div>
     <div class="panel coach-only" id="coach">
       <h3>🎓 Coach</h3>
+      <div id="styleDesc" class="muted" style="font-size:12px;margin-bottom:8px"></div>
       <div id="coachBody" class="muted">Aguardando sua vez…</div>
     </div>
     <div class="panel coach-only" id="beat" style="display:none">
@@ -80,8 +99,46 @@
   <div class="dlg-b" id="glossBody"></div>
 </dialog>
 
+<dialog id="tdlg">
+  <div class="dlg-h"><b>🏆 Novo torneio</b><button class="btn" onclick="tdlg.close()">Fechar ✕</button></div>
+  <div class="dlg-b">
+    <p>Simulação de um torneio de verdade: todos começam com <b>10.000 fichas (100 BB)</b>, os blinds sobem a cada nível (com <b>ante</b> a partir do nível 3), mesas são quebradas e balanceadas, existe a <b>bolha</b>, a <b>premiação</b> e a <b>mesa final</b>. Os adversários usam a IA profissional (ranges por posição, push/fold, c-bet, pressão de bolha) com perfis variados: regulares TAG/LAG, nits, recreativos e maníacos.</p>
+    <div class="row" style="display:flex;gap:16px;flex-wrap:wrap">
+      <label class="chk">Tamanho
+        <select id="tField" class="btn">
+          <option value="6">Sit &amp; Go — 6 jogadores (1 mesa)</option>
+          <option value="18">Torneio pequeno — 18 jogadores</option>
+          <option value="36" selected>Open — 36 jogadores</option>
+          <option value="72">Grande Open — 72 jogadores</option>
+        </select></label>
+      <label class="chk">Velocidade dos blinds
+        <select id="tSpeed" class="btn">
+          <option value="6">Turbo (sobe a cada 6 mãos)</option>
+          <option value="10" selected>Normal (a cada 10 mãos)</option>
+          <option value="15">Deep (a cada 15 mãos)</option>
+        </select></label>
+    </div>
+    <p class="muted">Buy-in e prêmios são fictícios ($100 por jogador), só para treino. Dica: no modo Aprendizado o coach ensina push/fold, M e ICM.</p>
+    <button class="btn big" id="bTStart">Começar torneio ▶</button>
+  </div>
+</dialog>
+
+<dialog id="rdlg">
+  <div class="dlg-h"><b>🏆 Resultado do torneio</b><button class="btn" onclick="rdlg.close()">Fechar ✕</button></div>
+  <div class="dlg-b">
+    <div id="rbody"></div>
+    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+      <button class="btn" id="bSimEnd">⏩ Simular até o fim</button>
+      <button class="btn big" id="bNewT">Novo torneio</button>
+      <button class="btn" id="bToCash">Voltar ao cash</button>
+    </div>
+  </div>
+</dialog>
+
 <script src="js/engine.js"></script>
 <script src="js/audio.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/tournament.js"></script>
 <script src="js/game.js"></script>
 </body>
 </html>
