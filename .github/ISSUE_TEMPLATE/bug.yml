@@ -1,0 +1,19 @@
+name: 🐞 Bug / Erro do coach
+description: Algo quebrou ou o coach recomendou algo errado
+labels: [bug]
+body:
+  - type: textarea
+    id: oque
+    attributes:
+      label: O que aconteceu? / What happened?
+    validations:
+      required: true
+  - type: input
+    id: situacao
+    attributes:
+      label: Situação da mão / Hand situation
+      placeholder: "Ex.: Eu no BTN com A♥K♦, mesa K♠7♣2♦, Peixe apostou 10"
+  - type: input
+    id: navegador
+    attributes:
+      label: Navegador / Browser

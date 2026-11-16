@@ -1,0 +1,15 @@
+name: 💡 Sugestão / Suggestion
+description: Ideia de melhoria para o jogo, o coach ou os bots
+labels: [enhancement]
+body:
+  - type: textarea
+    id: ideia
+    attributes:
+      label: Qual é a ideia? / What's the idea?
+      placeholder: Ex.: modo torneio com blinds subindo
+    validations:
+      required: true
+  - type: textarea
+    id: porque
+    attributes:
+      label: Por que ajudaria? / Why would it help?

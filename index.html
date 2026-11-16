@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Poker Lab</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<header>
+  <div class="logo">♠ Poker <b>Lab</b></div>
+  <div class="seg" id="modeSeg">
+    <button data-m="treino">🎯 Treino</button>
+    <button data-m="learn" class="on">🎓 Aprendizado</button>
+  </div>
+  <label class="chk coach-only"><input type="checkbox" id="xray"> Raio-X (ver cartas da IA)</label>
+  <label class="chk">Velocidade
+    <select id="speed" class="btn" style="padding:4px 6px"><option value="1100">Lenta</option><option value="700" selected>Normal</option><option value="300">Rápida</option></select>
+  </label>
+  <button class="btn" id="bSnd" title="Ligar/desligar som">🔊</button>
+  <input type="range" id="vol" min="0" max="1" step="0.05" style="width:80px;accent-color:var(--gold)" title="Volume">
+  <div class="spacer"></div>
+  <a class="btn" href="https://github.com/AndreSouzaTI/poker-lab/issues/new/choose" target="_blank" rel="noopener" style="text-decoration:none">💡 Sugerir melhoria</a>
+  <button class="btn" id="bGloss">📖 Glossário & Ranking</button>
+  <button class="btn" id="bReset">↺ Zerar estatísticas</button>
+</header>
+
+<main>
+  <section>
+    <div class="table-wrap">
+      <div class="felt"><div class="brand">POKER LAB · NL HOLD'EM 1/2</div></div>
+      <div class="center">
+        <div class="board" id="board"></div>
+        <div class="pot" id="pot">Pote: 0</div>
+        <div class="msg" id="msg"></div>
+      </div>
+      <div id="seats"></div>
+    </div>
+    <div class="controls">
+      <div class="info" id="ctlInfo"></div>
+      <div class="row">
+        <button class="ab fold" id="bFold">Fold<kbd>F</kbd></button>
+        <button class="ab call" id="bCall">Check<kbd>C</kbd></button>
+        <button class="ab raise" id="bRaise">Aumentar<kbd>R</kbd></button>
+      </div>
+      <div class="row">
+        <input type="range" id="rng" min="0" max="100" step="1">
+        <input type="number" id="amt">
+        <div id="presets" class="row" style="margin:0"></div>
+      </div>
+      <div class="row">
+        <button class="btn big" id="bNext">Próxima mão ▶ <kbd>Espaço</kbd></button>
+        <label class="chk"><input type="checkbox" id="auto"> Próxima mão automática</label>
+      </div>
+    </div>
+  </section>
+
+  <aside>
+    <div class="panel coach-only" id="coach">
+      <h3>🎓 Coach</h3>
+      <div id="coachBody" class="muted">Aguardando sua vez…</div>
+    </div>
+    <div class="panel coach-only" id="beat" style="display:none">
+      <h3>⚔️ Mãos que te batem agora</h3>
+      <div id="beatBody"></div>
+    </div>
+    <div class="panel">
+      <h3>📊 Suas estatísticas</h3>
+      <div id="stats"></div>
+    </div>
+    <div class="panel">
+      <h3>📜 Histórico da mão</h3>
+      <div id="log"></div>
+    </div>
+  </aside>
+</main>
+
+<dialog id="dlg">
+  <div class="dlg-h"><b>📖 Glossário & Ranking de mãos</b><button class="btn" onclick="dlg.close()">Fechar ✕</button></div>
+  <div class="dlg-b" id="glossBody"></div>
+</dialog>
+
+<script src="js/engine.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
