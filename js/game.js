@@ -472,9 +472,11 @@ function heroAct(type,to){
 }
 
 /* ============ RENDER ============ */
-function cardTxt(c){return `<b style="color:${su(c)===1||su(c)===2?'#ff7b72':'#e6edf3'}">${RDISP(rk(c))}${SUITS[su(c)]}</b>`;}
+const SUIT_LOG_COLOR=['#e6edf3','#ff7b72','#58a6ff','#56d364'];   // 4 cores: espadas, copas, ouros, paus
+function cardTxt(c){return `<b style="color:${SUIT_LOG_COLOR[su(c)]}">${RDISP(rk(c))}${SUITS[su(c)]}</b>`;}
 function cardHTML(c,hidden,sm){if(hidden) return `<div class="card back ${sm?'sm':''}"></div>`;
-  return `<div class="card ${su(c)===1||su(c)===2?'red':''} ${sm?'sm':''}"><span>${RDISP(rk(c))}</span><b>${SUITS[su(c)]}</b></div>`;}
+  const s=su(c);
+  return `<div class="card s${s} ${sm?'sm':''}" role="img" aria-label="${RDISP(rk(c))} de ${['espadas','copas','ouros','paus'][s]}"><span>${RDISP(rk(c))}</span><b><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#su${s}"/></svg></b></div>`;}
 /* Raio-X (ver as cartas dos bots): só no cash e só no modo Aprendizado */
 const xrayOk=()=>S.game==='cash'&&S.mode==='learn';
 function syncXray(){const c=$('#xray'),ok=xrayOk();
