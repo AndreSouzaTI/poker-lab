@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Poker Lab</title>
-<link rel="stylesheet" href="css/styles.css?v=1.5.6">
+<link rel="stylesheet" href="css/styles.css?v=1.5.7">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -13,6 +13,17 @@
     <symbol id="su1" viewBox="0 0 24 24"><path d="M12 22C5.5 16.6 2 12.9 2 8.7A5.2 5.2 0 0 1 12 6.6a5.2 5.2 0 0 1 10 2.1c0 4.2-3.500 7.900-10 13.300Z"/></symbol>
     <symbol id="su2" viewBox="0 0 24 24"><path d="M12 1 20.500 12 12 23 3.500 12Z"/></symbol>
     <symbol id="su3" viewBox="0 0 24 24"><circle cx="12" cy="6.800" r="4.800"/><circle cx="6" cy="14" r="4.800"/><circle cx="18" cy="14" r="4.800"/><path d="M12 10c0 6-.8 9.400-3.600 12h7.200C12.800 19.400 12 16 12 10Z"/></symbol>
+    <symbol id="cb" viewBox="0 0 100 140">
+      <defs><pattern id="cbp" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0H10M0 0V10" stroke="#d9b96a" stroke-opacity=".28" stroke-width=".7" fill="none"/></pattern></defs>
+      <rect x=".5" y=".5" width="99" height="139" rx="7" fill="#f6f1e4"/>
+      <rect x="6" y="6" width="88" height="128" rx="4" fill="#6b1423"/>
+      <rect x="6" y="6" width="88" height="128" rx="4" fill="url(#cbp)"/>
+      <rect x="10" y="10" width="80" height="120" rx="2.500" fill="none" stroke="#d9b96a" stroke-width="1.100"/>
+      <g transform="translate(50 70)" fill="none" stroke="#d9b96a" stroke-width="1.200">
+        <circle r="19" fill="#6b1423"/><circle r="15"/>
+        <path d="M0-15 5 0 0 15-5 0Z M-15 0 0-5 15 0 0 5Z" fill="#d9b96a" fill-opacity=".85" stroke="none"/>
+      </g>
+    </symbol>
   </defs>
 </svg>
 <header>
@@ -248,11 +259,12 @@
 
 <canvas id="fx" popover="manual" aria-hidden="true"></canvas>
 
-<script src="js/engine.js?v=1.5.6"></script>
-<script src="js/audio.js?v=1.5.6"></script>
-<script src="js/ai.js?v=1.5.6"></script>
-<script src="js/tournament.js?v=1.5.6"></script>
-<script src="js/game.js?v=1.5.6"></script>
-<script src="js/lobby.js?v=1.5.6"></script>
+<script src="js/engine.js?v=1.5.7"></script>
+<script src="js/cards.js?v=1.5.7"></script>
+<script src="js/audio.js?v=1.5.7"></script>
+<script src="js/ai.js?v=1.5.7"></script>
+<script src="js/tournament.js?v=1.5.7"></script>
+<script src="js/game.js?v=1.5.7"></script>
+<script src="js/lobby.js?v=1.5.7"></script>
 </body>
 </html>
