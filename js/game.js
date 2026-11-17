@@ -71,6 +71,26 @@ function saveStats(){try{localStorage.setItem('pokerlab-stats',JSON.stringify(ST
 
 function log(h){const d=document.createElement('div');d.innerHTML=h;const L=$('#log');L.prepend(d);while(L.children.length>80)L.lastChild.remove();}
 
+/* ============ DIAGNÓSTICO: erros e travamentos aparecem no histórico da mão ============ */
+const DIAG={errs:[],stall:0,sig:'',since:Date.now()};
+function reportError(e,where){
+  const msg=(e&&e.message||String(e))+' ['+(where||'?')+']'; DIAG.errs.push(msg+' '+(((e&&e.stack)||'').split(String.fromCharCode(10))[1]||'').trim()); if(DIAG.errs.length>20) DIAG.errs.shift();
+  try{ console.error('[PokerLab]',e); log(`⚠️ <b>Erro interno</b>: ${msg.replace(/</g,'&lt;')}`); }catch(_){}
+}
+window.addEventListener('error',ev=>reportError(ev.error||ev.message,(ev.filename||'').split('/').pop()+':'+ev.lineno));
+window.addEventListener('unhandledrejection',ev=>reportError(ev.reason,'promise'));
+/* vigia: se for a vez de um bot e nada mudar por muito tempo, destrava a mesa */
+setInterval(()=>{
+  if(document.hidden||document.querySelector('dialog[open]')||S.handOver||!S.players||!S.players.length){DIAG.since=Date.now();DIAG.stall=0;return;}
+  const sig=[S.handNo,S.street,S.toAct,S.currentBet,S.players.map(p=>p.bet+'/'+p.stack+(p.folded?'f':'')).join()].join('|');
+  if(sig!==DIAG.sig){DIAG.sig=sig;DIAG.since=Date.now();DIAG.stall=0;return;}
+  const p=S.players[S.toAct]; if(!p||p.isHero) return;          // a vez é sua: não é travamento
+  const wait=Date.now()-DIAG.since, limit=Math.max(12000,(typeof delay==='function'?delay():1000)*8);
+  if(wait>limit&&DIAG.stall<1){ DIAG.stall=1; log(`⚠️ <b>Mesa parada</b> esperando ${p.name} (${Math.round(wait/1000)} s). Tentando continuar…`); try{ loop(); }catch(e){ reportError(e,'vigia'); } }
+  else if(wait>limit+6000&&DIAG.stall<2){ DIAG.stall=2; log(`⚠️ ${p.name} não respondeu: ação automática.`);
+    try{ act(p,{type:S.currentBet-p.bet>0?'fold':'check'}); }catch(e){ reportError(e,'vigia/ação'); } }
+},2000);
+
 /* ============ FLUXO DA MÃO ============ */
 function startHand(){
   clockStop();
@@ -122,7 +142,10 @@ function loop(){
   if(p.isHero){ S.rec=advise(); render(); renderCoach(); SFX.turn(); clockStart(); return; }
   render();
   const hid=S.handNo;
-  setTimeout(()=>{ if(hid!==S.handNo||S.handOver) return; act(p,botDecide(p)); },S.game==='mtt'?thinkTime(p):delay());
+  setTimeout(()=>{ if(hid!==S.handNo||S.handOver) return;
+    let d; try{ d=botDecide(p); }catch(e){ reportError(e,'decisão de '+p.name); d={type:S.currentBet-p.bet>0?'fold':'check'}; }   // nunca deixa a mesa parada
+    try{ act(p,d); }catch(e){ reportError(e,'ação de '+p.name); }
+  },S.game==='mtt'?thinkTime(p):delay());
 }
 /* ---- relógio de ação (torneio): 30 s por decisão + extensões de tempo, como nos torneios ao vivo ---- */
 const CLOCK={secs:30,bank:5,extra:30,left:5,t:0,max:30,on:false,id:0,hid:0,lastBeep:99};
@@ -480,7 +503,8 @@ function syncXray(){const c=$('#xray'),ok=xrayOk();
   if(!ok&&S.xray){S.xray=false;c.checked=false;}
   c.disabled=!ok; c.parentElement.title=ok?'Mostra as cartas dos bots (só para estudo)':S.game==='mtt'?'Raio-X não existe em torneios':'Raio-X só funciona no modo Aprendizado';
   c.parentElement.style.opacity=ok?'':'.5';}
-function render(){
+function render(){ try{ renderImpl(); }catch(e){ reportError(e,'render'); } }
+function renderImpl(){
   syncXray();
   let h='';
   S.players.forEach((p,i)=>{const [x,y]=seatPos()[i];
