@@ -29,9 +29,14 @@ A simulated multi-table tournament, from the opening level to the final table:
 - **Living tournament:** the other tables are simulated hand by hand (all-ins use real cards), players bust, **tables break and get balanced**, and new opponents sit at your table
 - **Bubble, ITM and final table**, a payout table (≈14% of the field paid) and a final ranking
 - If you bust, you can **simulate the rest** and see who won
+- A final screen with your **finishing place**; a **trophy and fireworks** if you finish in the top 3
 - Your tournament history: played, ITM %, best finish and profit
 
 Opponents use a **pro-style AI**: position-based opening ranges from a ranked list of all 169 starting hands, 3-bets (including suited-ace bluffs), **push/fold** with short stacks, re-shoves, c-bets sized by board texture, semi-bluffs, SPR awareness and **bubble pressure (ICM)**. Each opponent has a profile — regular TAG, regular LAG, nit, recreational or maniac. The same AI can be turned on in cash games ("IA profissional").
+
+### 🃏 Showdown details
+- **All-in runout:** once nobody can bet any more, the remaining players' cards are turned face up and each hand's win percentage is shown while the rest of the board is dealt
+- **Show your cards:** when everyone folds to you, a button lets you show your hand if you want (the bots sometimes do too)
 
 ### 🎓 Learning mode
 Choose **the style you want to learn** — TAG, LAG, Nit, Passive (Rock) or Balanced (GTO-style) — and the coach recommends and explains plays the way that style would, with its VPIP/PFR targets. On every decision, a coach panel shows:

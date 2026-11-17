@@ -60,10 +60,10 @@ function log(h){const d=document.createElement('div');d.innerHTML=h;const L=$('#
 function startHand(){
   if(S.game==='mtt'&&(T.heroOut||T.finished)) return showResult();
   clearTimeout(S.autoT);
-  S.handNo++; S.handOver=false; S.showdown=false; S.board=[]; S.street=0; S.raises=0; S.pfAggr=-1; S.lastAggr=-1; S.decisions=[]; S.rec=null;
+  S.handNo++; S.handOver=false; S.showdown=false; S.reveal=false; S.uncontested=false; S.board=[]; S.street=0; S.raises=0; S.pfAggr=-1; S.lastAggr=-1; S.decisions=[]; S.rec=null;
   S.players.forEach(p=>{ if(p.empty) return;
     if(S.game==='cash'&&p.stack<=0){ p.stack=START; log(`<b>${p.name}</b> fez recompra (rebuy) de ${START}.`); }
-    Object.assign(p,{hole:[],bet:0,total:0,ante:0,folded:false,allIn:false,acted:false,lastAction:'',winner:false,handDesc:'',startStack:p.stack,vp:false,pr:false,range:null,rangeWhy:''});
+    Object.assign(p,{shown:false,eq:null,hole:[],bet:0,total:0,ante:0,folded:false,allIn:false,acted:false,lastAction:'',winner:false,handDesc:'',startStack:p.stack,vp:false,pr:false,range:null,rangeWhy:''});
   });
   S.dealer=nextOcc(S.dealer);
   const occ=occFrom(S.dealer), sb=occ.length===2?occ[0]:occ[1], bb=occ.length===2?occ[1]:occ[2]; S.bbI=bb;
@@ -90,7 +90,9 @@ function loop(){
   if(S.handOver) return;
   const live=liveP();
   if(live.length===1) return winUncontested(live[0]);
-  if(roundComplete()){ const hid=S.handNo; render(); setTimeout(()=>{if(hid===S.handNo&&!S.handOver)nextStreet();},Math.max(350,delay()*.8)); return; }
+  if(roundComplete()){ const hid=S.handNo, runout=S.street<3&&S.players.filter(p=>!p.folded&&!p.allIn).length<=1;
+    if(runout&&!S.reveal) revealRunout();      // ninguém mais pode apostar: abre as cartas e distribui o resto
+    render(); setTimeout(()=>{if(hid===S.handNo&&!S.handOver)nextStreet();},runout?Math.max(1100,delay()*1.5):Math.max(350,delay()*.8)); return; }
   const p=S.players[S.toAct];
   if(p.folded||p.allIn){S.toAct=next(S.toAct);return loop();}
   if(p.isHero){ S.rec=advise(); render(); renderCoach(); SFX.turn(); return; }
@@ -138,13 +140,36 @@ function nextStreet(){
   S.street++; S.deck.pop();
   const n=S.street===1?3:1; for(let k=0;k<n;k++){ S.board.push(S.deck.pop()); SFX.flip(k*.12); }
   log(`— <b>${STREET[S.street]}</b>: ${S.board.map(cardTxt).join(' ')}`);
+  if(S.reveal) calcRunoutEq();
   let i=next(S.dealer); while(S.players[i].folded||S.players[i].allIn){i=next(i); if(i===next(S.dealer))break;}
   S.toAct=i; loop();
 }
+/* All-in: sem mais apostas possíveis, as cartas de quem ainda está na mão ficam abertas na mesa */
+function revealRunout(){
+  S.reveal=true; calcRunoutEq(); SFX.allin();
+  const live=liveP();
+  log(`👁 <b>All-in!</b> Não há mais apostas — cartas abertas: ${live.map(p=>`<b>${p.isHero?'Você':p.name}</b> ${p.hole.map(cardTxt).join(' ')}`).join(' · ')}`);
+  $('#msg').textContent='All-in! Cartas abertas — vem o resto da mesa…';
+}
+/* chance de ganhar de cada jogador nas mãos abertas (simulação das cartas que faltam) */
+function calcRunoutEq(){
+  const live=liveP(), known=new Set([...S.board]); live.forEach(p=>p.hole.forEach(c=>known.add(c)));
+  const rest=[...Array(52).keys()].filter(c=>!known.has(c)), need=5-S.board.length, N_IT=need?1200:1, win=live.map(()=>0);
+  if(!need){ const v=live.map(p=>evaluate(p.hole.concat(S.board)).v), b=Math.max(...v), w=v.filter(x=>x===b).length; live.forEach((p,k)=>p.eq=v[k]===b?1/w:0); return; }
+  for(let it=0;it<N_IT;it++){
+    for(let k=0;k<need;k++){const j=k+Math.floor(Math.random()*(rest.length-k)); [rest[k],rest[j]]=[rest[j],rest[k]];}
+    const bd=S.board.concat(rest.slice(0,need)), v=live.map(p=>evaluate(p.hole.concat(bd)).v), b=Math.max(...v), w=v.filter(x=>x===b).length;
+    v.forEach((x,k)=>{if(x===b) win[k]+=1/w;});
+  }
+  live.forEach((p,k)=>p.eq=win[k]/N_IT);
+}
+function cardsTxtOf(p){return p.hole.map(cardTxt).join(' ');}
 function winUncontested(p){
   const pot=potTotal(); p.stack+=pot; p.winner=true; S.handOver=true;
   $('#msg').textContent=`${p.name} leva ${fmt(pot)} (todos desistiram)`;
   log(`🏆 <b>${p.name}</b> ganha ${fmt(pot)} sem showdown.`);
+  S.uncontested=true;      // o vencedor pode mostrar as cartas se quiser
+  if(!p.isHero&&Math.random()<((p.cfg&&p.cfg.bluff>=.25)?.3:.07)){ p.shown=true; p.lastAction='Mostrou'; log(`👁 <b>${p.name}</b> mostrou as cartas: ${cardsTxtOf(p)} (${notation(p.hole).replace(/T/g,'10')})`); SFX.flip(); }
   endHand(false);
 }
 function showdown(){
@@ -376,7 +401,7 @@ function render(){
   let h='';
   S.players.forEach((p,i)=>{const [x,y]=seatPos()[i];
     if(p.empty){h+=`<div class="seat empty" style="left:${x}%;top:${y}%"><div class="box">Lugar vazio</div></div>`;return;}
-    const show=p.isHero||(S.xray&&S.mode==='learn')||(S.showdown&&!p.folded);
+    const show=p.isHero||p.shown||(S.xray&&S.mode==='learn')||((S.showdown||S.reveal)&&!p.folded);
     const cards=(p.hole||[]).length&&!(p.folded&&!p.isHero)?p.hole.map(c=>cardHTML(c,!show,!p.isHero)).join(''):'';
     h+=`<div class="seat ${p.isHero?'hero':''} ${p.folded?'folded':''} ${S.toAct===i&&!S.handOver?'turn':''} ${p.winner?'win':''}" style="left:${x}%;top:${y}%">
       <div class="cards">${cards}</div>
@@ -384,6 +409,7 @@ function render(){
         <div class="nm">${p.name}</div><div class="st">${fmt(p.stack)} <small>(${+(p.stack/BB).toFixed(1)} BB)</small></div>
         ${!p.isHero&&S.mode==='learn'?`<div class="sty">${p.style}</div>`:''}
         ${p.handDesc&&S.showdown&&!p.folded?`<div class="hd">${p.handDesc}</div>`:''}
+        ${S.reveal&&!S.showdown&&!p.folded&&p.eq!=null?`<div class="hd eq">${Math.round(p.eq*100)}%</div>`:''}
         <div class="act">${p.lastAction||''}</div></div></div>`;
     if(p.bet>0){const k=MQ_PHONE.matches?.22:.45,bx=x+(50-x)*k,by=y+(46-y)*k;h+=`<div class="chip" style="left:${bx}%;top:${by}%">${fmt(p.bet)}</div>`;}
   });
@@ -403,6 +429,7 @@ function updateControls(){
   const canRaise=on&&hero.stack>toCall&&othersCanAct;
   $('#bRaise').disabled=!canRaise; $('#rng').disabled=!canRaise; $('#amt').disabled=!canRaise;
   const over=S.game==='mtt'&&(T.heroOut||T.finished);
+  $('#bShow').style.display=(S.handOver&&S.uncontested&&hero.winner&&!hero.shown)?'':'none';
   $('#bNext').disabled=!S.handOver; $('#bNext').innerHTML=over?'Ver resultado 🏆':'Próxima mão ▶ <kbd>Espaço</kbd>';
   if(on){
     const rng=$('#rng'); rng.min=minTo; rng.max=maxTo; rng.step=Math.max(1,SBL/2);
@@ -420,7 +447,7 @@ function updateControls(){
     $('#ctlInfo').innerHTML=inf;
   } else {
     $('#presets').innerHTML='';
-    $('#ctlInfo').innerHTML=over?(T.heroOut?`Você foi eliminado em ${hero.place}º.`:'Torneio encerrado.'):S.handOver?'Mão encerrada.':hero.folded?'Você desistiu desta mão. Observe como os outros jogam.':`Aguardando ${S.players[S.toAct]?S.players[S.toAct].name:''}…`;
+    $('#ctlInfo').innerHTML=over?(T.heroOut?`Você foi eliminado em ${hero.place}º.`:'Torneio encerrado.'):S.handOver?(S.uncontested&&hero.winner&&!hero.shown?'Todos desistiram: você pode mostrar suas cartas.':'Mão encerrada.'):S.reveal?'All-in: sem mais apostas. Distribuindo o resto da mesa…':hero.folded?'Você desistiu desta mão. Observe como os outros jogam.':`Aguardando ${S.players[S.toAct]?S.players[S.toAct].name:''}…`;
   }
 }
 function setRaiseLabel(){const v=+$('#amt').value, maxTo=hero.bet+hero.stack;
@@ -469,6 +496,8 @@ $('#bFold').onclick=()=>heroAct('fold');
 $('#bCall').onclick=()=>heroAct(S.currentBet-hero.bet>0?'call':'check');
 $('#bRaise').onclick=()=>heroAct('raise',+$('#amt').value);
 $('#bNext').onclick=()=>{if(S.handOver)startHand();};
+$('#bShow').onclick=()=>{ if(!(S.handOver&&S.uncontested&&hero.winner)||hero.shown) return; hero.shown=true; hero.lastAction='Mostrou';
+  log(`👁 <b>Você</b> mostrou as cartas: ${cardsTxtOf(hero)} (${notation(hero.hole).replace(/T/g,'10')})`); SFX.flip(); render(); };
 $('#rng').oninput=e=>{$('#amt').value=e.target.value;setRaiseLabel();};
 $('#amt').oninput=e=>{$('#rng').value=e.target.value;setRaiseLabel();};
 $('#presets').onclick=e=>{const v=e.target.dataset.v;if(v){$('#amt').value=v;$('#rng').value=v;setRaiseLabel();}};

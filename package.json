@@ -1,6 +1,6 @@
 {
   "name": "poker-lab",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Texas Hold'em trainer with an AI coach — plain HTML, CSS and JavaScript",
   "private": true,
   "scripts": {

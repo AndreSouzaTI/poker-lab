@@ -37,7 +37,7 @@ function startTournament(field,hpl,seats){
   if(S.game==='cash'){S.cashSeats=S.players; hero.cashStack=hero.stack; S.cashN=N;}
   N=seats||N; $('#tableSize').value=String(N);
   S.game='mtt';
-  Object.assign(T,{active:true,field,hpl,level:0,inLevel:0,elim:[],heroOut:false,finished:false,fast:false,flags:{},
+  Object.assign(T,{recorded:false,celebrated:false,active:true,field,hpl,level:0,inLevel:0,elim:[],heroOut:false,finished:false,fast:false,flags:{},
     payouts:payoutTable(field),movedHero:false,bustBy:null});
   T.paid=T.payouts.length;
   const names=shuffled(NICKS); while(names.length<field) names.push('Jogador'+names.length);
@@ -151,7 +151,7 @@ function simulateToEnd(){
     if(bots.length) T.tables.push({id:1,seats:[...bots,...Array(N-bots.length).fill(null)],btn:0});
     S.players=S.players.map(p=>p.isHero?p:emptySeat()); T.movedHero=true;}
   T.fast=true; let g=0;
-  while(T.remaining()>1&&g++<100000){T.tables.forEach(simTableHand); T.inLevel++; if(T.inLevel>=T.hpl){T.level++;T.inLevel=0;setLevel();} balance();}
+  while(T.remaining()>1&&g++<100000){T.tables.forEach(simTableHand); T.inLevel++; if(T.inLevel>=T.hpl){T.level=Math.min(T.level+1,LEVELS.length-1);T.inLevel=0;setLevel();} balance();}
   finishTournament(); T.fast=false; renderTourney(); showResult();
 }
 
@@ -183,14 +183,53 @@ function renderTourney(){
   $('#tbody').innerHTML=h;
   $('.felt .brand').textContent=`TORNEIO · NÍVEL ${T.level+1} · ${fmt(SBL)}/${fmt(BB)}${ANTE?' ('+fmt(ANTE)+')':''}`;
 }
+/* ---------- tela final: colocação, troféu e fogos (top 3) ---------- */
+const MEDAL={1:['#e3b341','#a67c12','Campeão'],2:['#cfd6de','#8b949e','Vice-campeão'],3:['#d68a47','#8a5524','Terceiro lugar']};
+function trophySVG(pl){const [c,d]=MEDAL[pl];
+  return `<svg viewBox="0 0 120 130" class="trophy" role="img" aria-label="Troféu de ${pl}º lugar">
+    <path d="M30 24H12c0 20 8 34 24 38M90 24h18c0 20-8 34-24 38" fill="none" stroke="${c}" stroke-width="7" stroke-linecap="round"/>
+    <path d="M30 12h60v34c0 20-13 36-30 36S30 66 30 46z" fill="${c}"/>
+    <path d="M42 24v22c0 11 5 20 12 26" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="5" stroke-linecap="round"/>
+    <rect x="54" y="80" width="12" height="18" fill="${d}"/><rect x="36" y="98" width="48" height="12" rx="3" fill="${c}"/><rect x="30" y="110" width="60" height="10" rx="3" fill="${d}"/>
+    <text x="63" y="58" text-anchor="middle" font-size="32" font-weight="800" fill="rgba(0,0,0,.5)" font-family="system-ui,sans-serif">${pl}</text></svg>`;}
 function showResult(){
   if(!T.active) return; recordResult();
-  const champ=T.players.find(p=>p.place===1);
-  let h=hero.place===1?`<h2 style="color:var(--gold);margin:4px 0">🥇 VOCÊ É O CAMPEÃO!</h2>`:`<h2 style="margin:4px 0">Você terminou em <span style="color:var(--gold)">${hero.place}º</span> de ${T.field}</h2>`;
-  h+=`<div>${hero.prize?`💰 Prêmio: <b style="color:var(--green)">${money(hero.prize)}</b> (buy-in ${money(BUYIN)})`:'Sem prêmio desta vez — faltou pouco? Veja no histórico o que aconteceu.'}</div>`;
-  if(T.bustBy&&hero.place>1) h+=`<div class="muted">Eliminado por ${T.bustBy}.</div>`;
+  const champ=T.players.find(p=>p.place===1), pl=hero.place, top3=pl>=1&&pl<=3;
+  let h=top3
+    ? `<div class="res-top"><div class="trophy-wrap">${trophySVG(pl)}</div><div><div class="res-place" style="color:${MEDAL[pl][0]}">${pl}º lugar</div><div class="res-sub">${pl===1?'VOCÊ É O CAMPEÃO!':pl===2?'Vice-campeão! Faltou pouco para o título.':'Você está no pódio!'}</div><div class="muted">de ${T.field} jogadores</div></div></div>`
+    : `<div class="res-top"><div class="res-badge">${pl}º</div><div><div class="res-place">lugar de ${T.field}</div><div class="res-sub">${hero.prize?'Você ficou na premiação (ITM)':'Fora da premiação desta vez'}</div></div></div>`;
+  h+=`<div>${hero.prize?`💰 Prêmio: <b style="color:var(--green)">${money(hero.prize)}</b> (buy-in ${money(BUYIN)})`:'Sem prêmio — veja no histórico o que aconteceu.'}</div>`;
+  if(T.bustBy&&pl>1) h+=`<div class="muted">Eliminado por ${T.bustBy}.</div>`;
   if(!T.finished) h+=`<p>O torneio continua com <b>${T.remaining()}</b> jogadores.</p>`;
   else{ h+=`<p>🏆 Campeão: <b>${champ?champ.name:''}</b></p><h4>Classificação final</h4><ol class="l">${T.elim.filter(e=>e.place<=Math.max(T.paid,6)).sort((a,b)=>a.place-b.place).map(e=>`<li>${e.name===hero.name?'<b>Você</b>':e.name}${e.prize?' — '+money(e.prize):''}</li>`).join('')}</ol>`;}
   $('#rbody').innerHTML=h; $('#bSimEnd').style.display=T.finished?'none':'';
+  $('#rdlg').classList.toggle('celebrate',top3);
   if(!$('#rdlg').open) $('#rdlg').showModal();
+  if(top3&&!T.celebrated){T.celebrated=true; celebrate(pl);}
 }
+
+/* fogos de artifício em tela cheia (canvas no popover, por cima do diálogo) */
+const FX={raf:0,stopT:0,parts:[],rockets:[]};
+function stopFireworks(){cancelAnimationFrame(FX.raf);clearTimeout(FX.stopT);FX.parts=[];FX.rockets=[];const c=$('#fx');try{c.hidePopover();}catch(e){} }
+function celebrate(pl){
+  SFX.fanfare();
+  const calm=window.matchMedia('(prefers-reduced-motion:reduce)').matches;   // movimento reduzido: fogos mais curtos e espaçados, em vez de desligar
+  const c=$('#fx'), ctx=c.getContext('2d'), dpr=window.devicePixelRatio||1;
+  try{c.showPopover();}catch(e){}
+  c.width=innerWidth*dpr; c.height=innerHeight*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+  const cols=pl===1?['#e3b341','#ffd866','#ffffff','#f85149','#3fb950','#58a6ff']:pl===2?['#cfd6de','#ffffff','#58a6ff','#a5d6ff']:['#d68a47','#ffb27a','#ffffff','#f0883e'];
+  const t0=performance.now(), dur=calm?4000:pl===1?9000:6500; let last=t0, nextRocket=0;
+  const burst=(x,y)=>{const col=cols[Math.floor(Math.random()*cols.length)], n=70+Math.floor(Math.random()*40); SFX.boom();
+    for(let k=0;k<n;k++){const a=Math.random()*Math.PI*2, v=1.5+Math.random()*4.2; FX.parts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:1,dec:.008+Math.random()*.01,col});}};
+  const frame=now=>{const dt=Math.min(40,now-last)/16.7; last=now; const el=now-t0;
+    ctx.globalCompositeOperation='destination-out'; ctx.fillStyle='rgba(0,0,0,.22)'; ctx.fillRect(0,0,innerWidth,innerHeight); ctx.globalCompositeOperation='lighter';
+    if(el<dur-1500&&el>=nextRocket){nextRocket=el+(calm?900:pl===1?260:420)+Math.random()*380; FX.rockets.push({x:innerWidth*(.12+Math.random()*.76),y:innerHeight,ty:innerHeight*(.12+Math.random()*.4),vy:-(9+Math.random()*3)});}
+    FX.rockets=FX.rockets.filter(r=>{r.y+=r.vy*dt; r.vy*=.985; ctx.fillStyle='#ffe9a8'; ctx.fillRect(r.x-1.5,r.y,3,9); if(r.y<=r.ty||r.vy>-2.2){burst(r.x,r.y);return false;} return true;});
+    FX.parts=FX.parts.filter(p=>{p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=.055*dt; p.vx*=.992; p.life-=p.dec*dt; if(p.life<=0) return false;
+      ctx.globalAlpha=Math.max(0,p.life); ctx.fillStyle=p.col; ctx.beginPath(); ctx.arc(p.x,p.y,2.2,0,6.283); ctx.fill(); return true;});
+    ctx.globalAlpha=1;
+    if(el<dur||FX.parts.length||FX.rockets.length) FX.raf=requestAnimationFrame(frame); else stopFireworks();};
+  cancelAnimationFrame(FX.raf); FX.raf=requestAnimationFrame(frame);
+  FX.stopT=setTimeout(stopFireworks,dur+4000);
+}
+document.getElementById('rdlg').addEventListener('close',stopFireworks);
