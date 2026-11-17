@@ -10,7 +10,13 @@ const BOTS=[
   {name:'Peixe',pro:'fish',style:'Calling station (Loose-Passivo)',open:-3,agg:.06,bluff:.02,call:-.1,loose:1.8,tip:'Paga tudo, quase nunca blefa. Aposte por valor; NÃO blefe.'},
   {name:'Professor',pro:'lag',style:'Equilibrado (estilo GTO)',open:0,agg:.4,bluff:.1,call:0,loose:1.1,tip:'Joga balanceado; difícil de ler.'},
 ];
-const SEATPOS=[[50,87],[9,64],[15,20],[50,8],[85,20],[91,64]];
+const SEATPOS_WIDE=[[50,87],[9,64],[15,20],[50,8],[85,20],[91,64]];
+const SEATPOS_TALL=[[50,89],[16,68],[16,31],[50,10],[84,31],[84,68]];   // mesa em pé (celular)
+const MQ_PHONE=window.matchMedia('(max-width:640px)');
+let SEATPOS=MQ_PHONE.matches?SEATPOS_TALL:SEATPOS_WIDE;
+MQ_PHONE.addEventListener('change',e=>{SEATPOS=e.matches?SEATPOS_TALL:SEATPOS_WIDE;if(typeof render==='function')render();});
+document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('bMenu'),h=document.querySelector('header');
+  if(b)b.addEventListener('click',()=>{const o=h.classList.toggle('open');b.setAttribute('aria-expanded',o);});});
 let S={players:[],dealer:Math.floor(Math.random()*N),board:[],deck:[],street:0,currentBet:0,minRaise:BB,toAct:-1,raises:0,handOver:true,handNo:0,
   mode:'learn',game:'cash',coachStyle:'tag',xray:false,showdown:false,pfAggr:-1,lastAggr:-1,bbI:0,rec:null,decisions:[]};
 try{const cs=localStorage.getItem('pokerlab-style'); if(cs&&COACH_STYLES[cs]) S.coachStyle=cs;}catch(e){}
