@@ -176,3 +176,18 @@ dialog{max-height:92dvh}
   #bNext{padding:8px 10px;font-size:13px;min-height:36px}
   .controls label.chk{font-size:12px}
 }
+/* celular em pé: assentos estreitos, longe das cartas da mesa; suas cartas grandes */
+@media(max-width:640px){
+  .seat{width:74px}
+  .seat .box{padding:3px 4px}
+  .seat .nm{font-size:11px}
+  .seat .hd{font-size:9px}
+  .slot,.board .card{width:34px;height:48px}
+  .board{gap:3px}
+  .seat.hero{width:140px}
+  .seat.hero .cards{margin-bottom:-6px;gap:5px}
+  .seat.hero .cards .card{width:46px;height:64px}
+  .seat.hero .cards .card span{font-size:18px}.seat.hero .cards .card b{font-size:20px}
+  .seat.hero .box{display:flex;gap:6px;align-items:baseline;justify-content:center;flex-wrap:wrap}
+  .center{top:44%}
+}

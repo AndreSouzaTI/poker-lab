@@ -11,7 +11,7 @@ const BOTS=[
   {name:'Professor',pro:'lag',style:'Equilibrado (estilo GTO)',open:0,agg:.4,bluff:.1,call:0,loose:1.1,tip:'Joga balanceado; difícil de ler.'},
 ];
 const SEATPOS_WIDE=[[50,87],[9,64],[15,20],[50,8],[85,20],[91,64]];
-const SEATPOS_TALL=[[50,89],[16,68],[16,31],[50,10],[84,31],[84,68]];   // mesa em pé (celular)
+const SEATPOS_TALL=[[50,87],[13,70],[13,30],[50,9],[87,30],[87,70]];   // mesa em pé (celular)
 const MQ_PHONE=window.matchMedia('(max-width:640px)');
 let SEATPOS=MQ_PHONE.matches?SEATPOS_TALL:SEATPOS_WIDE;
 MQ_PHONE.addEventListener('change',e=>{SEATPOS=e.matches?SEATPOS_TALL:SEATPOS_WIDE;if(typeof render==='function')render();});
@@ -364,14 +364,14 @@ function render(){
     if(p.empty){h+=`<div class="seat empty" style="left:${x}%;top:${y}%"><div class="box">Lugar vazio</div></div>`;return;}
     const show=p.isHero||(S.xray&&S.mode==='learn')||(S.showdown&&!p.folded);
     const cards=(p.hole||[]).length&&!(p.folded&&!p.isHero)?p.hole.map(c=>cardHTML(c,!show,!p.isHero)).join(''):'';
-    h+=`<div class="seat ${p.folded?'folded':''} ${S.toAct===i&&!S.handOver?'turn':''} ${p.winner?'win':''}" style="left:${x}%;top:${y}%">
+    h+=`<div class="seat ${p.isHero?'hero':''} ${p.folded?'folded':''} ${S.toAct===i&&!S.handOver?'turn':''} ${p.winner?'win':''}" style="left:${x}%;top:${y}%">
       <div class="cards">${cards}</div>
       <div class="box">${i===S.dealer?'<div class="dealer">D</div>':''}<div class="pos">${posName(i)}</div>
         <div class="nm">${p.name}</div><div class="st">${fmt(p.stack)} <small>(${+(p.stack/BB).toFixed(1)} BB)</small></div>
         ${!p.isHero&&S.mode==='learn'?`<div class="sty">${p.style}</div>`:''}
         ${p.handDesc&&S.showdown&&!p.folded?`<div class="hd">${p.handDesc}</div>`:''}
         <div class="act">${p.lastAction||''}</div></div></div>`;
-    if(p.bet>0){const bx=x+(50-x)*.45,by=y+(46-y)*.45;h+=`<div class="chip" style="left:${bx}%;top:${by}%">${fmt(p.bet)}</div>`;}
+    if(p.bet>0){const k=MQ_PHONE.matches?.22:.45,bx=x+(50-x)*k,by=y+(46-y)*k;h+=`<div class="chip" style="left:${bx}%;top:${by}%">${fmt(p.bet)}</div>`;}
   });
   $('#seats').innerHTML=h;
   let b=S.board.map(c=>cardHTML(c)).join(''); for(let k=S.board.length;k<5;k++) b+='<div class="slot"></div>';
