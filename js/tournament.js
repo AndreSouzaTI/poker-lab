@@ -130,7 +130,7 @@ function tourneyAfterHand(){
   balance(); announce();
   if(T.remaining()===1) finishTournament();
   renderTourney();
-  if(T.heroOut||T.finished) setTimeout(showResult,900);
+  if(T.heroOut||T.finished) setTimeout(showResult,5500);   // dá tempo de ver como a última mão terminou
 }
 function announce(){
   const R=T.remaining(), f=T.flags;

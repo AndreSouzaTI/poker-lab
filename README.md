@@ -40,6 +40,7 @@ Opponents use a **pro-style AI**: position-based opening ranges from a ranked li
 
 ### 🃏 Showdown details
 - **All-in runout:** once nobody can bet any more, the remaining players' cards are turned face up and each hand's win percentage is shown while the rest of the board is dealt
+- **Time to read the result:** the runout is paced (about 2 s per street, 3 s after the river), and with *Próxima mão automática* on, the next hand waits 7.5 s after a showdown and 10 s after an all-in (+3 s in learning mode), with a countdown on the button — click it to skip
 - **Show your cards:** when everyone folds to you, a button lets you show your hand if you want (the bots sometimes do too)
 
 ### 🎓 Learning mode

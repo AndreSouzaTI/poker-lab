@@ -76,7 +76,7 @@ function startHand(){
   clockStop();
   if(S.game==='mtt'&&(T.heroOut||T.finished)) return showResult();
   clearTimeout(S.autoT);
-  S.autoFold=false; $('#autoFold').checked=false;
+  S.autoFold=false; $('#autoFold').checked=false; S.nextAt=0; clearInterval(nextTimer);
   hero.sat=!!S.sitOut;     // ausente: nesta mão você é descartado automaticamente (blinds/ante continuam)
   S.handNo++; const lvTxt=cashTick(); S.handOver=false; S.showdown=false; S.reveal=false; S.uncontested=false; S.board=[]; S.street=0; S.raises=0; S.pfAggr=-1; S.lastAggr=-1; S.decisions=[]; S.rec=null;
   S.players.forEach(p=>{ if(p.empty) return;
@@ -110,7 +110,8 @@ function loop(){
   if(live.length===1) return winUncontested(live[0]);
   if(roundComplete()){ const hid=S.handNo, runout=S.street<3&&S.players.filter(p=>!p.folded&&!p.allIn).length<=1;
     if(runout&&!S.reveal) revealRunout();      // ninguém mais pode apostar: abre as cartas e distribui o resto
-    render(); setTimeout(()=>{if(hid===S.handNo&&!S.handOver)nextStreet();},runout?Math.max(1100,delay()*1.5):Math.max(350,delay()*.8)); return; }
+    const riverDone=S.street===3&&S.reveal;      // all-in: a 5ª carta já saiu; dá tempo de ver as mãos antes do resultado
+    render(); setTimeout(()=>{if(hid===S.handNo&&!S.handOver)nextStreet();},riverDone?Math.max(3000,delay()*3.5):runout?Math.max(1900,delay()*2.4):Math.max(350,delay()*.8)); return; }
   const p=S.players[S.toAct];
   if(p.folded||p.allIn){S.toAct=next(S.toAct);return loop();}
   if(p.isHero&&(S.autoFold||p.sat)){   // pré-ação "fold automático" (ou ausente): check se não houver aposta a pagar
@@ -255,6 +256,13 @@ function showdown(){
   $('#msg').textContent=msgs.join(' · ');
   endHand(true);
 }
+/* contagem no botão "Próxima mão" quando a próxima mão é automática */
+function nextLabel(){const left=S.nextAt?Math.ceil((S.nextAt-Date.now())/1000):0; return left>0?`Próxima mão em ${left} s ▶ <kbd>Espaço</kbd>`:'Próxima mão ▶ <kbd>Espaço</kbd>';}
+let nextTimer=0;
+function tickNext(){clearInterval(nextTimer);
+  nextTimer=setInterval(()=>{ const b=$('#bNext');
+    if(!S.handOver||!S.nextAt||Date.now()>=S.nextAt){ clearInterval(nextTimer); if(S.nextAt&&Date.now()>=S.nextAt) S.nextAt=0; return; }
+    if(!b.innerHTML.startsWith('Ver resultado')) b.innerHTML=nextLabel(); },250);}
 function endHand(sd){
   const net=hero.stack-hero.startStack, nm=notation(hero.hole);
   setTimeout(()=>{ if(hero.winner) SFX.win(); else if(net<0&&!hero.folded) SFX.lose(); else SFX.pot(); },250);
@@ -268,7 +276,12 @@ function endHand(sd){
   if(S.game==='mtt') tourneyAfterHand();
   render();
   const over=S.game==='mtt'&&(T.heroOut||T.finished);
-  if(($('#auto').checked||S.sitOut)&&!over) S.autoT=setTimeout(startHand,S.sitOut?1600:S.mode==='learn'?4500:2200);   // ausente: as mãos seguem sozinhas
+  if(($('#auto').checked||S.sitOut)&&!over){   // ausente: as mãos seguem sozinhas
+    let w=sd?(S.reveal?10000:7500):3500;       // showdown/all-in: tempo para ler quem ganhou e por quê
+    if(S.mode==='learn'&&!S.sitOut) w+=3000;    // no Aprendizado, também dá tempo de ler a revisão da mão
+    if(S.sitOut) w=Math.min(w,3500);
+    S.nextAt=Date.now()+w; S.autoT=setTimeout(startHand,w); tickNext();
+  }
 }
 
 /* ============ BOTS ============ */
@@ -513,7 +526,7 @@ function updateControls(){
   $('#bShow').style.display=(S.handOver&&S.uncontested&&hero.winner&&!hero.shown)?'':'none';
   {const af=$('#autoFold'),can=!S.handOver&&!hero.folded&&!hero.allIn&&!hero.out; af.disabled=!can; if(!can){af.checked=false;S.autoFold=false;}}
   {const aw=$('#away'); aw.hidden=!S.sitOut; $('#awayTxt').textContent=hero.sat?'Você está ausente: suas mãos são descartadas e os blinds continuam sendo cobrados.':'Você ficará ausente a partir da próxima mão.';}
-  $('#bNext').disabled=!S.handOver; $('#bNext').innerHTML=over?'Ver resultado 🏆':'Próxima mão ▶ <kbd>Espaço</kbd>';
+  $('#bNext').disabled=!S.handOver; $('#bNext').innerHTML=over?'Ver resultado 🏆':nextLabel();
   if(on){
     const rng=$('#rng'); rng.min=minTo; rng.max=maxTo; rng.step=Math.max(1,SBL/2);
     let v=S.rec&&S.rec.size&&S.mode==='learn'?S.rec.size:minTo; v=Math.max(minTo,Math.min(maxTo,v));
