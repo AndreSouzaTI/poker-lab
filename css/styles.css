@@ -222,3 +222,41 @@ dialog{max-height:92dvh}
 #rdlg.celebrate::backdrop{background:rgba(0,0,0,.4)}
 @media(prefers-reduced-motion:reduce){.trophy{animation:none}.card{animation:none}}
 @media(max-width:640px){.res-place{font-size:28px}.trophy{width:84px;height:92px}}
+
+/* ===== Lobby (tela de entrada) e painel de cash ===== */
+.logo-btn{background:none;border:0;color:inherit;cursor:pointer;font-family:inherit;padding:0}
+.logo-btn:hover b{text-decoration:underline}
+#lobby{padding:0;border-radius:16px;width:min(620px,94vw);max-height:94dvh;overflow:auto}
+#lobby::backdrop{background:radial-gradient(ellipse at 50% 25%,#14502f 0%,#0a1f15 55%,#050d09 100%)}
+#lbForm{padding:22px 24px 18px;display:flex;flex-direction:column;gap:16px;margin:0}
+.lb-logo{font-weight:800;font-size:18px}.lb-logo b{color:var(--gold)}
+.lb-head h1{font-size:24px;margin:6px 0 4px;line-height:1.2;text-wrap:balance}
+.lb-head p{margin:0}
+.lb-field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.lb-field>span{font-size:12px;font-weight:700;color:var(--mute);letter-spacing:.04em;text-transform:uppercase}
+.lb-field input[type=text]{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:11px 12px;font-size:16px;width:100%}
+.lb-field input[type=text]:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+.lb-field small{min-height:16px}
+.lb-field select{width:100%;min-height:44px;font-size:15px}
+.lb-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.lb-row[hidden],.lb-field[hidden]{display:none}
+.seg.full{width:100%}.seg.full button{flex:1;padding:11px 8px;min-height:44px}
+.lb-actions{display:flex;gap:10px}.lb-play{flex:1;padding:14px;font-size:16px}
+.lb-foot{font-size:12px;margin:0}
+#lobby :focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.cfg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.cfg label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--mute)}
+.cfg select{width:100%}
+@media(max-width:640px){
+  #lobby{width:100vw;height:100dvh;max-height:none;border-radius:0}
+  #lbForm{padding:16px 16px 22px;gap:13px}
+  #lbMtt{grid-template-columns:1fr}
+  .lb-field select{font-size:14px;padding-left:8px;padding-right:4px}
+}
+/* suas cartas ficam grandes também na mesa de 9 */
+.table-wrap.n9 .seat.hero .cards .card{width:44px;height:62px}
+.table-wrap.n9 .seat.hero .cards .card span{font-size:17px}.table-wrap.n9 .seat.hero .cards .card b{font-size:19px}
+@media(max-width:640px){
+  .table-wrap.n9 .seat.hero .cards .card{width:46px;height:64px}
+  .table-wrap.n9 .seat.hero .cards .card span{font-size:18px}.table-wrap.n9 .seat.hero .cards .card b{font-size:20px}
+}

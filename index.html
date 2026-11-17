@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Poker Lab</title>
-<link rel="stylesheet" href="css/styles.css?v=1.3.0">
+<link rel="stylesheet" href="css/styles.css?v=1.4.0">
 </head>
 <body>
 <header>
-  <div class="logo">♠ Poker <b>Lab</b></div>
+  <button class="logo logo-btn" id="bLobby" title="Voltar ao lobby (novo jogo, nome, opções)">♠ Poker <b>Lab</b></button>
   <div class="seg" id="gameSeg">
     <button data-g="cash" class="on">💵 Cash</button>
     <button data-g="mtt">🏆 Torneio</button>
@@ -47,6 +47,17 @@
 
 <main>
   <aside class="side-l">
+    <div class="panel" id="cpanel" style="display:none">
+      <h3>💵 Cash game</h3>
+      <div class="kv"><span>Blinds</span><b id="cBlinds"></b></div>
+      <div class="kv"><span>Nível</span><b id="cLevel"></b></div>
+      <div class="kv"><span>Próximo</span><b id="cNext"></b></div>
+      <div class="kv"><span>Seu stack</span><b id="cStack"></b></div>
+      <div class="cfg">
+        <label>Blinds <select id="cStake" class="btn"></select></label>
+        <label>Aumento <select id="cEsc" class="btn"><option value="0">Fixos</option><option value="10">A cada 10 mãos</option><option value="15">A cada 15 mãos</option><option value="25">A cada 25 mãos</option></select></label>
+      </div>
+    </div>
     <div class="panel" id="tpanel" style="display:none">
       <h3>🏆 Torneio</h3>
       <div id="tbody"></div>
@@ -103,6 +114,67 @@
   </aside>
 </main>
 
+<dialog id="lobby" aria-labelledby="lbTitle">
+  <form id="lbForm" method="dialog" autocomplete="off">
+    <div class="lb-head">
+      <div class="lb-logo">♠ Poker <b>Lab</b></div>
+      <h1 id="lbTitle">Escolha como quer jogar</h1>
+      <p class="muted">Treine Texas Hold'em contra IAs que jogam como profissionais. Sem dinheiro de verdade.</p>
+    </div>
+
+    <label class="lb-field"><span>Seu nome</span>
+      <input id="lbName" type="text" maxlength="14" placeholder="Como quer ser chamado?" autocomplete="nickname"></label>
+
+    <div class="lb-field"><span>Modo de jogo</span>
+      <div class="seg full" id="lbGame" role="group" aria-label="Modo de jogo">
+        <button type="button" data-v="cash">💵 Cash game</button>
+        <button type="button" data-v="mtt">🏆 Torneio</button>
+      </div>
+      <small class="muted" id="lbGameHint"></small>
+    </div>
+
+    <div class="lb-field"><span>Lugares na mesa</span>
+      <div class="seg full" id="lbSeats" role="group" aria-label="Lugares na mesa">
+        <button type="button" data-v="6">6-max</button>
+        <button type="button" data-v="9">Mesa cheia (9)</button>
+      </div>
+    </div>
+
+    <div class="lb-row" id="lbCash">
+      <label class="lb-field"><span>Blinds</span><select id="lbStake" class="btn"></select></label>
+      <label class="lb-field"><span>Aumento dos blinds</span>
+        <select id="lbEsc" class="btn"><option value="0">Fixos</option><option value="10">A cada 10 mãos</option><option value="15">A cada 15 mãos</option><option value="25">A cada 25 mãos</option></select></label>
+    </div>
+    <div class="lb-row" id="lbMtt">
+      <label class="lb-field"><span>Tamanho do torneio</span><select id="lbField" class="btn"></select></label>
+      <label class="lb-field"><span>Velocidade dos blinds</span>
+        <select id="lbSpeed" class="btn"><option value="6">Turbo (6 mãos)</option><option value="10">Normal (10 mãos)</option><option value="15">Deep (15 mãos)</option></select></label>
+    </div>
+
+    <div class="lb-field"><span>Como quer jogar</span>
+      <div class="seg full" id="lbMode" role="group" aria-label="Treino ou aprendizado">
+        <button type="button" data-v="treino">🎯 Treino</button>
+        <button type="button" data-v="learn">🎓 Aprendizado</button>
+      </div>
+      <small class="muted" id="lbModeHint"></small>
+    </div>
+    <label class="lb-field" id="lbStyleWrap"><span>Estilo que quer aprender</span>
+      <select id="lbStyle" class="btn">
+        <option value="tag">TAG (Tight-Agressivo)</option>
+        <option value="lag">LAG (Loose-Agressivo)</option>
+        <option value="nit">Nit (Super tight)</option>
+        <option value="rock">Passivo (Rock)</option>
+        <option value="gto">Equilibrado (GTO)</option>
+      </select></label>
+
+    <div class="lb-actions">
+      <button class="btn big lb-play" id="lbPlay" type="submit">Jogar ▶</button>
+      <button class="btn" id="lbBack" type="button" style="display:none">Voltar ao jogo</button>
+    </div>
+    <p class="muted lb-foot" id="lbStats"></p>
+  </form>
+</dialog>
+
 <dialog id="dlg">
   <div class="dlg-h"><b>📖 Glossário & Ranking de mãos</b><button class="btn" onclick="dlg.close()">Fechar ✕</button></div>
   <div class="dlg-b" id="glossBody"></div>
@@ -151,10 +223,11 @@
 
 <canvas id="fx" popover="manual" aria-hidden="true"></canvas>
 
-<script src="js/engine.js?v=1.3.0"></script>
-<script src="js/audio.js?v=1.3.0"></script>
-<script src="js/ai.js?v=1.3.0"></script>
-<script src="js/tournament.js?v=1.3.0"></script>
-<script src="js/game.js?v=1.3.0"></script>
+<script src="js/engine.js?v=1.4.0"></script>
+<script src="js/audio.js?v=1.4.0"></script>
+<script src="js/ai.js?v=1.4.0"></script>
+<script src="js/tournament.js?v=1.4.0"></script>
+<script src="js/game.js?v=1.4.0"></script>
+<script src="js/lobby.js?v=1.4.0"></script>
 </body>
 </html>

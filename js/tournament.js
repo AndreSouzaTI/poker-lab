@@ -54,8 +54,8 @@ function startTournament(field,hpl,seats){
 }
 function leaveTournament(){
   S.handNo++; S.handOver=true; clearTimeout(S.autoT);
-  T.active=false; S.game='cash'; BB=2; SBL=1; ANTE=0;
-  N=S.cashN||N; $('#tableSize').value=String(N); S.players=S.cashSeats||S.players; hero.stack=hero.cashStack||START; hero.out=false;
+  T.active=false; S.game='cash'; setCashLevel(CASH.lv);
+  N=S.cashN||N; $('#tableSize').value=String(N); S.players=S.cashSeats||S.players; hero.stack=hero.cashStack||cashBuyIn(); hero.out=false;
   syncGameUI(); startHand();
 }
 

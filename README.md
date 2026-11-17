@@ -17,8 +17,11 @@ A No-Limit Texas Hold'em table (6-max or full 9-handed) where you play against u
 
 ## Features
 
+### 🚪 Lobby
+The game opens on an entry screen: your **name**, **cash or tournament**, 6-max or full 9-handed tables, the **blind level** (1/2 up to 100/200) and whether the blinds **rise every 10/15/25 hands**, tournament size and speed, and **training or learning mode** (with the coach style you want to learn). Click the logo any time to come back.
+
 ### 🎯 Training mode
-Just you against the machine at a 6-max or 9-handed table: blinds 1/2, 200-chip stacks, the dealer button moves each hand, side pots and all-ins work, and busted players rebuy automatically.
+Just you against the machine at a 6-max or 9-handed table: blind levels from 1/2 to 100/200 (fixed or rising every N hands, with stacks scaling along so the depth in big blinds stays the same), 100 BB stacks, the dealer button moves each hand, side pots and all-ins work, and busted players rebuy automatically.
 
 ### 🏆 Tournament mode (MTT)
 A simulated multi-table tournament, from the opening level to the final table:

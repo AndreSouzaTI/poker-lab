@@ -26,12 +26,27 @@ document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementByI
 let S={players:[],dealer:Math.floor(Math.random()*N),board:[],deck:[],street:0,currentBet:0,minRaise:BB,toAct:-1,raises:0,handOver:true,handNo:0,
   mode:'learn',game:'cash',coachStyle:'tag',xray:false,showdown:false,pfAggr:-1,lastAggr:-1,bbI:0,rec:null,decisions:[]};
 try{const cs=localStorage.getItem('pokerlab-style'); if(cs&&COACH_STYLES[cs]) S.coachStyle=cs;}catch(e){}
-S.players.push({name:'Você',isHero:true,stack:START});
-BOTS.slice(0,N-1).forEach(b=>S.players.push({name:b.name,style:b.style,cfg:b,stack:START}));
+S.players.push({name:'Você',isHero:true,stack:100*BB});
+BOTS.slice(0,N-1).forEach(b=>S.players.push({name:b.name,style:b.style,cfg:b,stack:100*BB}));
 const hero=S.players[0];
 /* mesa de cash com n lugares (6 ou 9): você + os n-1 primeiros bots */
-function buildCashTable(n){N=n; hero.stack=START; hero.cashStack=START;
-  S.players=[hero,...BOTS.slice(0,n-1).map(b=>({name:b.name,style:b.style,cfg:b,stack:START}))];
+/* ---- blinds do cash: valor escolhido + (opcional) aumento a cada X mãos ---- */
+const CASH_LEVELS=[[1,2],[2,4],[3,6],[5,10],[10,20],[15,30],[25,50],[50,100],[100,200],[200,400],[300,600],[500,1000]];
+const CASH={lv:0,esc:true,hpl:15,inLv:0};
+const cashBuyIn=()=>100*BB;      // 100 BB, qualquer que seja o nível
+function setCashLevel(i){CASH.lv=Math.max(0,Math.min(i,CASH_LEVELS.length-1)); SBL=CASH_LEVELS[CASH.lv][0]; BB=CASH_LEVELS[CASH.lv][1]; ANTE=0;}
+/* muda de nível mantendo a profundidade de todos em BB (stacks escalam junto) */
+function scaleStacks(oldBB){ if(oldBB===BB) return; S.players.forEach(p=>{if(!p.empty) p.stack=Math.max(1,Math.round(p.stack*BB/oldBB));}); if(hero.cashStack) hero.cashStack=Math.round(hero.cashStack*BB/oldBB); }
+function cashTick(){   // início de cada mão de cash: sobe o nível quando chega a hora
+  if(S.game!=='cash'||!CASH.esc||S.handNo<=1) return '';
+  CASH.inLv++;
+  if(CASH.inLv>=CASH.hpl&&CASH.lv<CASH_LEVELS.length-1){ const old=BB; CASH.inLv=0; setCashLevel(CASH.lv+1); scaleStacks(old); return `⏫ <b>Blinds subiram</b> para ${fmt(SBL)}/${fmt(BB)} (nível ${CASH.lv+1}). Todos os stacks acompanharam: continuam com a mesma profundidade em BB.`; }
+  return '';
+}
+function applyCashStakes(i){ if(S.game!=='cash') return; const old=BB; setCashLevel(i); CASH.inLv=0; scaleStacks(old);
+  S.handNo++; S.handOver=true; clearTimeout(S.autoT); log(`💵 Blinds ajustados para <b>${fmt(SBL)}/${fmt(BB)}</b>.`); startHand(); }
+function buildCashTable(n){N=n; hero.stack=cashBuyIn(); hero.cashStack=cashBuyIn();
+  S.players=[hero,...BOTS.slice(0,n-1).map(b=>({name:b.name,style:b.style,cfg:b,stack:cashBuyIn()}))];
   S.dealer=Math.floor(Math.random()*N);}
 const STREET=['Pré-flop','Flop','Turn','River'];
 const next=i=>(i+1)%N;
@@ -60,9 +75,9 @@ function log(h){const d=document.createElement('div');d.innerHTML=h;const L=$('#
 function startHand(){
   if(S.game==='mtt'&&(T.heroOut||T.finished)) return showResult();
   clearTimeout(S.autoT);
-  S.handNo++; S.handOver=false; S.showdown=false; S.reveal=false; S.uncontested=false; S.board=[]; S.street=0; S.raises=0; S.pfAggr=-1; S.lastAggr=-1; S.decisions=[]; S.rec=null;
+  S.handNo++; const lvTxt=cashTick(); S.handOver=false; S.showdown=false; S.reveal=false; S.uncontested=false; S.board=[]; S.street=0; S.raises=0; S.pfAggr=-1; S.lastAggr=-1; S.decisions=[]; S.rec=null;
   S.players.forEach(p=>{ if(p.empty) return;
-    if(S.game==='cash'&&p.stack<=0){ p.stack=START; log(`<b>${p.name}</b> fez recompra (rebuy) de ${START}.`); }
+    if(S.game==='cash'&&p.stack<=0){ p.stack=cashBuyIn(); log(`<b>${p.name}</b> fez recompra (rebuy) de ${fmt(cashBuyIn())}.`); }
     Object.assign(p,{shown:false,eq:null,hole:[],bet:0,total:0,ante:0,folded:false,allIn:false,acted:false,lastAction:'',winner:false,handDesc:'',startStack:p.stack,vp:false,pr:false,range:null,rangeWhy:''});
   });
   S.dealer=nextOcc(S.dealer);
@@ -75,7 +90,7 @@ function startHand(){
   post(sb,SBL); post(bb,BB); S.players[sb].lastAction='SB '+fmt(SBL); S.players[bb].lastAction='BB '+fmt(BB)+(ANTE?' + ante':'');
   S.currentBet=BB; S.minRaise=BB; S.toAct=nextOcc(bb);
   $('#log').innerHTML=''; log(`<b>Mão #${S.handNo}</b> — Você está no <b>${posName(0)}</b> com <b>${notation(hero.hole).replace(/T/g,'10')}</b>${S.game==='mtt'?` · blinds ${fmt(SBL)}/${fmt(BB)}${ANTE?' ante '+fmt(ANTE):''}`:''}`);
-  $('#msg').textContent=''; $('#beat').style.display='none';
+  if(lvTxt){log(lvTxt); SFX.chips(0,4);} $('#msg').textContent=lvTxt?`Blinds subiram: ${fmt(SBL)}/${fmt(BB)}`:''; $('#beat').style.display='none';
   renderTourney(); loop();
 }
 function post(i,a){const p=S.players[i];a=Math.min(a,p.stack);p.stack-=a;p.bet+=a;p.total+=a;if(p.stack===0)p.allIn=true;}
@@ -416,8 +431,17 @@ function render(){
   $('#seats').innerHTML=h; $('.table-wrap').classList.toggle('n9',N>6);
   let b=S.board.map(c=>cardHTML(c)).join(''); for(let k=S.board.length;k<5;k++) b+='<div class="slot"></div>';
   $('#board').innerHTML=b; $('#pot').textContent='Pote: '+fmt(potTotal());
-  if(S.game==='cash') $('.felt .brand').textContent="POKER LAB · NL HOLD'EM 1/2";
-  updateControls(); renderStats();
+  if(S.game==='cash') $('.felt .brand').textContent=`POKER LAB · NL HOLD'EM ${fmt(SBL)}/${fmt(BB)}`;
+  updateControls(); renderStats(); renderCash();
+}
+function renderCash(){
+  const el=$('#cpanel'); if(!el) return; if(S.game!=='cash'){el.style.display='none';return;} el.style.display='';
+  const nx=CASH_LEVELS[Math.min(CASH.lv+1,CASH_LEVELS.length-1)], last=CASH.lv>=CASH_LEVELS.length-1;
+  $('#cBlinds').textContent=`${fmt(SBL)}/${fmt(BB)}`; $('#cLevel').textContent=`${CASH.lv+1} de ${CASH_LEVELS.length}`;
+  $('#cNext').textContent=!CASH.esc?'Blinds fixos':last?'Último nível':`${fmt(nx[0])}/${fmt(nx[1])} em ${Math.max(0,CASH.hpl-CASH.inLv)} mão(s)`;
+  $('#cStack').textContent=`${fmt(hero.stack)} (${+(hero.stack/BB).toFixed(1)} BB)`;
+  if(document.activeElement!==$('#cStake')) $('#cStake').value=String(CASH.lv);
+  if(document.activeElement!==$('#cEsc')) $('#cEsc').value=CASH.esc?String(CASH.hpl):'0';
 }
 function heroTurn(){return !S.handOver&&S.toAct===0&&!hero.folded&&!hero.allIn&&S.rec;}
 function updateControls(){
@@ -522,6 +546,9 @@ $('#bTStart').onclick=()=>{ $('#tdlg').close(); if($('#rdlg').open) $('#rdlg').c
 $('#tableSize').value=String(N);
 $('#tableSize').onchange=e=>{ if(S.game==='mtt'){e.target.value=String(N);return;}
   S.handNo++; S.handOver=true; clearTimeout(S.autoT); buildCashTable(+e.target.value); try{localStorage.setItem('pokerlab-seats',N);}catch(x){} $('#tSeats').value=String(N); fillFields(); log(`🪑 Mesa de <b>${N} lugares</b>.`); startHand(); };
+$('#cStake').innerHTML=CASH_LEVELS.slice(0,9).map((l,k)=>`<option value="${k}">${l[0]}/${l[1]}</option>`).join('');
+$('#cStake').onchange=e=>applyCashStakes(+e.target.value);
+$('#cEsc').onchange=e=>{const v=+e.target.value; CASH.esc=v>0; if(v>0) CASH.hpl=v; CASH.inLv=0; try{localStorage.setItem('pokerlab-cashesc',v);}catch(x){} renderCash();};
 $('#bSimEnd').onclick=()=>simulateToEnd();
 $('#bNewT').onclick=()=>{ $('#rdlg').close(); $('#tdlg').showModal(); };
 $('#bToCash').onclick=()=>{ $('#rdlg').close(); leaveTournament(); };
@@ -541,5 +568,5 @@ $('#bSnd').onclick=()=>{AU.on=!AU.on;saveAudio();syncSnd();if(AU.on)SFX.chips(0,
 $('#vol').oninput=e=>{AU.vol=+e.target.value;saveAudio();};
 $('#vol').onchange=()=>SFX.chips(0,3);
 syncSnd();
-window.__S=S; window.__AU=AU; window.__T=T;
-startHand();
+window.__S=S; window.__AU=AU; window.__T=T; window.__CASH=CASH;
+/* a primeira mão começa quando a pessoa escolhe o jogo no lobby (js/lobby.js) */
