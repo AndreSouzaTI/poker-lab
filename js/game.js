@@ -412,11 +412,18 @@ function heroAct(type,to){
 function cardTxt(c){return `<b style="color:${su(c)===1||su(c)===2?'#ff7b72':'#e6edf3'}">${RDISP(rk(c))}${SUITS[su(c)]}</b>`;}
 function cardHTML(c,hidden,sm){if(hidden) return `<div class="card back ${sm?'sm':''}"></div>`;
   return `<div class="card ${su(c)===1||su(c)===2?'red':''} ${sm?'sm':''}"><span>${RDISP(rk(c))}</span><b>${SUITS[su(c)]}</b></div>`;}
+/* Raio-X (ver as cartas dos bots): só no cash e só no modo Aprendizado */
+const xrayOk=()=>S.game==='cash'&&S.mode==='learn';
+function syncXray(){const c=$('#xray'),ok=xrayOk();
+  if(!ok&&S.xray){S.xray=false;c.checked=false;}
+  c.disabled=!ok; c.parentElement.title=ok?'Mostra as cartas dos bots (só para estudo)':S.game==='mtt'?'Raio-X não existe em torneios':'Raio-X só funciona no modo Aprendizado';
+  c.parentElement.style.opacity=ok?'':'.5';}
 function render(){
+  syncXray();
   let h='';
   S.players.forEach((p,i)=>{const [x,y]=seatPos()[i];
     if(p.empty){h+=`<div class="seat empty" style="left:${x}%;top:${y}%"><div class="box">Lugar vazio</div></div>`;return;}
-    const show=p.isHero||p.shown||(S.xray&&S.mode==='learn')||((S.showdown||S.reveal)&&!p.folded);
+    const show=p.isHero||p.shown||(S.xray&&xrayOk())||((S.showdown||S.reveal)&&!p.folded);
     const cards=(p.hole||[]).length&&!(p.folded&&!p.isHero)?p.hole.map(c=>cardHTML(c,!show,!p.isHero)).join(''):'';
     h+=`<div class="seat ${p.isHero?'hero':''} ${p.folded?'folded':''} ${S.toAct===i&&!S.handOver?'turn':''} ${p.winner?'win':''}" style="left:${x}%;top:${y}%">
       <div class="cards">${cards}</div>
@@ -525,7 +532,7 @@ $('#bShow').onclick=()=>{ if(!(S.handOver&&S.uncontested&&hero.winner)||hero.sho
 $('#rng').oninput=e=>{$('#amt').value=e.target.value;setRaiseLabel();};
 $('#amt').oninput=e=>{$('#rng').value=e.target.value;setRaiseLabel();};
 $('#presets').onclick=e=>{const v=e.target.dataset.v;if(v){$('#amt').value=v;$('#rng').value=v;setRaiseLabel();}};
-$('#xray').onchange=e=>{S.xray=e.target.checked;render();};
+$('#xray').onchange=e=>{S.xray=e.target.checked&&xrayOk();render();};
 $('#bReset').onclick=()=>{if(confirm('Zerar todas as estatísticas?')){ST=freshStats();saveStats();renderStats();renderTourney();}};
 $('#modeSeg').onclick=e=>{const m=e.target.dataset.m;if(!m)return;S.mode=m;
   document.querySelectorAll('#modeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
