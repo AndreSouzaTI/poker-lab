@@ -461,6 +461,7 @@ $('#glossBody').innerHTML=`<h3 style="color:var(--gold)">🏆 Ranking (da mais f
 const dlg=$('#dlg');
 function syncGameUI(){
   document.querySelectorAll('#gameSeg button').forEach(b=>b.classList.toggle('on',b.dataset.g===S.game));
+  $('#tableSize').disabled=S.game==='mtt';   // no torneio os lugares vêm da janela de novo torneio
   renderTourney();
 }
 $('#bGloss').onclick=()=>dlg.showModal();
