@@ -35,9 +35,9 @@ function cardSVG(c){
   if(face){
     body=`<rect x="25" y="27" width="50" height="86" rx="4" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-opacity=".55" stroke-width="1.200"/>`
       +`<rect x="29" y="31" width="42" height="78" rx="2" fill="none" stroke="currentColor" stroke-opacity=".25" stroke-width=".8"/>`
-      +`<g transform="translate(50 45)">${CROWN[r]}</g>`
-      +`<text x="50" y="85" text-anchor="middle" font-family="${CARD_SERIF}" font-weight="700" font-size="46">${lab}</text>`
-      +pipUse(s,50,100,14,false);
+      +`<g transform="translate(50 43) scale(.9)">${CROWN[r]}</g>`
+      +`<text x="50" y="79" text-anchor="middle" font-family="${CARD_SERIF}" font-weight="700" font-size="34">${lab}</text>`
+      +pipUse(s,50,96,24,false);
   } else if(r===14){
     body=pipUse(s,50,72,62);
   } else {
@@ -49,10 +49,13 @@ function cardSVG(c){
     +`<rect class="paper" x=".5" y=".5" width="99" height="139" rx="7"/>`
     +`<g class="full">${idx(false)}${idx(true)}${body}</g>${mini}</svg>`;
 }
+const RANK_NAME={14:'Ás',13:'Rei',12:'Dama',11:'Valete'};
+const SUIT_SYM=['♠','♥','♦','♣'];
+const cardName=c=>`${RANK_NAME[rk(c)]||rk(c)} de ${CARD_SUIT_NAME[su(c)]} ${SUIT_SYM[su(c)]}`;
 const CARD_CACHE={};
 function cardHTML(c,hidden,sm){
   const z=sm?' sm':'';
   if(hidden) return `<div class="card back${z}"><svg viewBox="0 0 100 140" aria-hidden="true" focusable="false"><use href="#cb"/></svg></div>`;
-  return CARD_CACHE[c]?`<div class="card s${su(c)}${z}" role="img" aria-label="${RDISP(rk(c))} de ${CARD_SUIT_NAME[su(c)]}">${CARD_CACHE[c]}</div>`
+  return CARD_CACHE[c]?`<div class="card s${su(c)}${z}" role="img" aria-label="${cardName(c)}" data-tip="${cardName(c)}">${CARD_CACHE[c]}</div>`
     :(CARD_CACHE[c]=cardSVG(c),cardHTML(c,hidden,sm));
 }

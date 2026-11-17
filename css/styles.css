@@ -292,3 +292,10 @@ dialog{max-height:92dvh}
 
 .ab.allin{background:#8a1f1f;box-shadow:inset 0 0 0 1px #ff7b72}
 .ab.allin:not(:disabled):hover{background:#a52828}
+
+/* nome da carta ao passar o mouse */
+.card[data-tip]{position:relative}
+.card[data-tip]::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 6px);transform:translate(-50%,4px);white-space:nowrap;background:#0d1117;color:#f0f6fc;border:1px solid #30363d;border-radius:6px;padding:4px 8px;font:600 12px/1.2 system-ui,sans-serif;box-shadow:0 4px 12px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .12s,transform .12s;z-index:60}
+.card[data-tip]:hover::after{opacity:1;transform:translate(-50%,0);transition-delay:.15s}
+.card[data-tip]:hover{z-index:61}
+@media(hover:none){.card[data-tip]::after{display:none}}
