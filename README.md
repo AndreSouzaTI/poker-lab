@@ -7,7 +7,7 @@
 
 **▶ Play it now: https://andresouzati.github.io/poker-lab/**
 
-A No-Limit Texas Hold'em table (6-max) where you play against 5 AI opponents and, if you want, get a coach that explains every decision. I built it for two reasons: **to learn poker properly** and **to practice the technologies behind it** (game state machines, Monte Carlo simulation, the Web Audio API, and plain JavaScript with no framework).
+A No-Limit Texas Hold'em table (6-max or full 9-handed) where you play against up to 8 AI opponents and, if you want, get a coach that explains every decision. I built it for two reasons: **to learn poker properly** and **to practice the technologies behind it** (game state machines, Monte Carlo simulation, the Web Audio API, and plain JavaScript with no framework).
 
 > The interface is in Brazilian Portuguese and uses the poker slang Brazilian players actually use (trinca, set, c-bet, nuts…). A Portuguese summary is at the end of this file.
 
@@ -18,12 +18,13 @@ A No-Limit Texas Hold'em table (6-max) where you play against 5 AI opponents and
 ## Features
 
 ### 🎯 Training mode
-Just you against the machine: blinds 1/2, 200-chip stacks, the dealer button moves each hand, side pots and all-ins work, and busted players rebuy automatically.
+Just you against the machine at a 6-max or 9-handed table: blinds 1/2, 200-chip stacks, the dealer button moves each hand, side pots and all-ins work, and busted players rebuy automatically.
 
 ### 🏆 Tournament mode (MTT)
 A simulated multi-table tournament, from the opening level to the final table:
 
-- **Field sizes:** Sit & Go (6), small (18), Open (36) or Big Open (72), with turbo, normal or deep blind speeds
+- **Table size:** 6-max or full 9-handed tables (UTG, UTG+1, MP, LJ, HJ, CO…)
+- **Field sizes:** Sit & Go, small, Open or Big Open (6/18/36/72 players at 6-max, 9/27/54/90 at 9-handed), with turbo, normal or deep blind speeds
 - **Real structure:** 10,000 starting chips (100 BB), rising blind levels and a **BB ante** from level 3
 - **Living tournament:** the other tables are simulated hand by hand (all-ins use real cards), players bust, **tables break and get balanced**, and new opponents sit at your table
 - **Bubble, ITM and final table**, a payout table (≈14% of the field paid) and a final ranking
@@ -118,7 +119,7 @@ Ideas already on my list: hand-history replay, range charts per position, a full
 
 ## 🇧🇷 Em português
 
-**Poker Lab** é uma mesa de Texas Hold'em No-Limit (6 jogadores) para treinar contra 5 IAs. Fiz para **aprender poker de verdade** e **treinar as tecnologias usadas** (JavaScript puro, simulação Monte Carlo, Web Audio API e máquina de estados).
+**Poker Lab** é uma mesa de Texas Hold'em No-Limit (6-max ou mesa cheia de 9) para treinar contra até 8 IAs. Fiz para **aprender poker de verdade** e **treinar as tecnologias usadas** (JavaScript puro, simulação Monte Carlo, Web Audio API e máquina de estados).
 
 - **Modo Treino:** só jogar contra a máquina.
 - **Modo Torneio:** do Open à mesa final — blinds subindo com ante, outras mesas simuladas, quebra e balanceamento de mesas, bolha, premiação e IA jogando como profissionais (ranges por posição, push/fold, ICM).

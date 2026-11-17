@@ -3,7 +3,7 @@
 "use strict";
 const SUITS=['♠','♥','♦','♣'];
 let BB=2, SBL=1, ANTE=0;          // blinds variam no torneio
-const START=200, N=6;
+const START=200; let N=6;   // N = lugares na mesa (6 ou 9)
 const rk=c=>(c>>2)+2, su=c=>c&3;
 const RCH=r=>({14:'A',13:'K',12:'Q',11:'J',10:'T'})[r]||String(r);
 const RDISP=r=>r===10?'10':RCH(r);
@@ -85,10 +85,13 @@ function handClass(h){const a=Math.max(rk(h[0]),rk(h[1])),b=Math.min(rk(h[0]),rk
     else if(a===14) out.push(`Ás com kicker ${RDISP(b)}`+(b<=9?' (kicker fraco = cuidado com mão dominada)':''));}
   return out;}
 function tier(ch){return ch>=12?['Premium','good']:ch>=9?['Forte','good']:ch>=7?['Jogável','']:ch>=5?['Marginal / especulativa','']:['Fraca (lixo)','bad'];}
-const OPEN_TH={UTG:9,MP:8,CO:7,BTN:6,SB:7,BB:7};
+const OPEN_TH={UTG:9,'UTG+1':8.7,MP:8,LJ:7.7,HJ:7.4,CO:7,BTN:6,SB:7,BB:7};
 const POSINFO={
   UTG:'<b>UTG (Under the Gun)</b> — o primeiro a falar no pré-flop. Posição mais difícil: ainda há 5 jogadores atrás de você. Jogue só ~15% das mãos (pares médios+, AJ+, KQ).',
   MP:'<b>MP / Hijack</b> — posição intermediária. Ainda há 4 jogadores para agir. Range de abertura ~20%.',
+  'UTG+1':'<b>UTG+1</b> — segunda posição a falar. Ainda é uma posição muito cedo: há muita gente atrás de você. Jogue só ~17% das mãos.',
+  LJ:'<b>LJ (Lojack)</b> — posição do meio, ainda cedo para agir. Range de abertura ~20%; evite mãos marginais.',
+  HJ:'<b>HJ (Hijack)</b> — duas posições antes do Button. Range de abertura ~24%: já dá para abrir mais mãos suited e conectadas.',
   CO:'<b>CO (Cutoff)</b> — a 2ª melhor posição. Só o Button e os blinds agem depois. Abra ~28-30% e tente roubar os blinds.',
   BTN:'<b>BTN (Button / Dealer)</b> — a MELHOR posição: você age por último em todo o pós-flop (flop, turn, river). Abra ~40-45% das mãos.',
   SB:'<b>SB (Small Blind)</b> — já pôs meia aposta, mas jogará fora de posição em todas as ruas. Seja seletivo; prefira aumentar a só completar.',

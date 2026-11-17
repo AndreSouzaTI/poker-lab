@@ -9,26 +9,40 @@ const BOTS=[
   {name:'Maníaco',pro:'maniac',style:'Loose-Agressivo (LAG)',open:-2,agg:.75,bluff:.28,call:-.03,loose:1.6,tip:'Aposta e blefa muito. Pague mais "leve" contra ele.'},
   {name:'Peixe',pro:'fish',style:'Calling station (Loose-Passivo)',open:-3,agg:.06,bluff:.02,call:-.1,loose:1.8,tip:'Paga tudo, quase nunca blefa. Aposte por valor; NÃO blefe.'},
   {name:'Professor',pro:'lag',style:'Equilibrado (estilo GTO)',open:0,agg:.4,bluff:.1,call:0,loose:1.1,tip:'Joga balanceado; difícil de ler.'},
+  {name:'Valéria',pro:'reg',style:'Tight-Agressivo (TAG)',open:.3,agg:.5,bluff:.1,call:.02,loose:1,tip:'Sólida e disciplinada. Respeite quando ela aposta forte.'},
+  {name:'Beto',pro:'fish',style:'Calling station (Loose-Passivo)',open:-2.5,agg:.1,bluff:.03,call:-.08,loose:1.7,tip:'Paga demais, quase não blefa. Aposte por valor.'},
+  {name:'Dona Lúcia',pro:'nit',style:'Tight-Passivo ("nit")',open:1,agg:.15,bluff:.03,call:.05,loose:.75,tip:'Só joga mãos boas. Se ela aposta, tem mão.'},
 ];
-const SEATPOS_WIDE=[[50,87],[9,64],[15,20],[50,8],[85,20],[91,64]];
-const SEATPOS_TALL=[[50,87],[13,70],[13,30],[50,9],[87,30],[87,70]];   // mesa em pé (celular)
+/* posições dos lugares (% da mesa): [x,y]; índice 0 = você, no centro de baixo, sentido horário */
+const SEATPOS_WIDE={6:[[50,87],[9,64],[15,20],[50,8],[85,20],[91,64]],
+  9:[[50,88],[25,82],[11,58],[13,30],[33,9],[67,9],[87,30],[89,58],[75,82]]};
+const SEATPOS_TALL={6:[[50,87],[13,70],[13,30],[50,9],[87,30],[87,70]],      // mesa em pé (celular)
+  9:[[50,90],[12,76],[12,54],[12,32],[34,9],[66,9],[88,32],[88,54],[88,76]]};
 const MQ_PHONE=window.matchMedia('(max-width:640px)');
-let SEATPOS=MQ_PHONE.matches?SEATPOS_TALL:SEATPOS_WIDE;
-MQ_PHONE.addEventListener('change',e=>{SEATPOS=e.matches?SEATPOS_TALL:SEATPOS_WIDE;if(typeof render==='function')render();});
+const seatPos=()=>(MQ_PHONE.matches?SEATPOS_TALL:SEATPOS_WIDE)[N];
+MQ_PHONE.addEventListener('change',()=>{if(typeof render==='function')render();});
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('bMenu'),h=document.querySelector('header');
   if(b)b.addEventListener('click',()=>{const o=h.classList.toggle('open');b.setAttribute('aria-expanded',o);});});
 let S={players:[],dealer:Math.floor(Math.random()*N),board:[],deck:[],street:0,currentBet:0,minRaise:BB,toAct:-1,raises:0,handOver:true,handNo:0,
   mode:'learn',game:'cash',coachStyle:'tag',xray:false,showdown:false,pfAggr:-1,lastAggr:-1,bbI:0,rec:null,decisions:[]};
 try{const cs=localStorage.getItem('pokerlab-style'); if(cs&&COACH_STYLES[cs]) S.coachStyle=cs;}catch(e){}
 S.players.push({name:'Você',isHero:true,stack:START});
-BOTS.forEach(b=>S.players.push({name:b.name,style:b.style,cfg:b,stack:START}));
+BOTS.slice(0,N-1).forEach(b=>S.players.push({name:b.name,style:b.style,cfg:b,stack:START}));
 const hero=S.players[0];
+/* mesa de cash com n lugares (6 ou 9): você + os n-1 primeiros bots */
+function buildCashTable(n){N=n; hero.stack=START; hero.cashStack=START;
+  S.players=[hero,...BOTS.slice(0,n-1).map(b=>({name:b.name,style:b.style,cfg:b,stack:START}))];
+  S.dealer=Math.floor(Math.random()*N);}
 const STREET=['Pré-flop','Flop','Turn','River'];
 const next=i=>(i+1)%N;
 function nextOcc(i){let j=next(i);for(let k=0;k<N;k++){if(!S.players[j].empty)return j;j=next(j);}return i;}
 function occFrom(start){const o=[];let j=start;for(let k=0;k<N;k++){if(!S.players[j].empty)o.push(j);j=next(j);}return o;}
-const POS_BY_N={2:['BTN','BB'],3:['BTN','SB','BB'],4:['BTN','SB','BB','CO'],5:['BTN','SB','BB','MP','CO'],6:['BTN','SB','BB','UTG','MP','CO']};
-function posName(i){if(S.players[i].empty)return '';const o=occFrom(S.dealer);return (POS_BY_N[o.length]||POS_BY_N[6])[o.indexOf(i)]||'';}
+const POS_BY_N={2:['BTN','BB'],3:['BTN','SB','BB'],4:['BTN','SB','BB','CO'],5:['BTN','SB','BB','MP','CO'],6:['BTN','SB','BB','UTG','MP','CO'],
+  7:['BTN','SB','BB','UTG','MP','HJ','CO'],8:['BTN','SB','BB','UTG','UTG+1','MP','HJ','CO'],9:['BTN','SB','BB','UTG','UTG+1','MP','LJ','HJ','CO']};
+function posName(i){if(S.players[i].empty)return '';const o=occFrom(S.dealer);return (POS_BY_N[Math.min(o.length,9)]||POS_BY_N[6])[o.indexOf(i)]||'';}
+/* texto da posição, com a contagem real de jogadores que ainda agem depois de você */
+function posInfo(pos){let t=POSINFO[pos]||''; const o=occFrom(S.dealer),k=o.indexOf(0);
+  if(k>=3){const n=o.length-1-k+3; t=t.replace(/ainda há \d+ jogadores?/,'ainda há '+n+' jogador'+(n>1?'es':''));} return t;}
 const potTotal=()=>S.players.reduce((a,p)=>a+p.total,0);
 const liveP=()=>S.players.filter(p=>!p.folded);
 const delay=()=>+$('#speed').value;
@@ -110,7 +124,7 @@ function act(p,d){
   if(S.mode==='learn'&&!p.isHero){
     if(d.type==='raise'&&S.street===0&&p.allIn&&p.total<=15*BB) tip=' <i>(push com stack curto: range largo)</i>';
     else if(d.type==='raise'&&S.street===0&&S.raises===2) tip=' <i>(3-bet: re-aumento, range forte ou blefe)</i>';
-    else if(d.type==='raise'&&S.street===0&&['UTG','MP'].includes(posName(i))) tip=' <i>(aumento de posição inicial = mão forte)</i>';
+    else if(d.type==='raise'&&S.street===0&&['UTG','UTG+1','MP','LJ'].includes(posName(i))) tip=' <i>(aumento de posição inicial = mão forte)</i>';
     else if(d.type==='raise'&&S.street===1&&S.pfAggr===i) tip=' <i>(c-bet: continuação de quem aumentou no pré)</i>';
   }
   log(`<b>${p.name}</b> <span class="muted">[${posName(i)}]</span>: ${p.lastAction}${tip}`);
@@ -233,7 +247,7 @@ function preflopAdvice(){
         cs.passive?`Como ${st}, você prefere ver o flop barato mesmo com mão boa no BB.`:`Houve limp(s) e sua mão é forte: puna os limpers com um aumento grande (iso-raise).`,Math.min(maxTo,BB*(3.5+lp)));
       return R_('check',['check'],'CHECK (veja o flop de graça)','Você está no BB e ninguém aumentou: veja o flop sem pagar nada.');
     }
-    const openP=Math.min(.95,(OPEN_PCT[pos]||.25)*cs.loose*(heads?1.7:1)*(lp?.75:1));
+    const openP=Math.min(.95,openPct(pos)*cs.loose*(heads?1.7:1)*(lp?.75:1));
     if(hp<=openP){
       if(cs.passive&&hp>.07) return R_('call',['call','raise'],`PAGUE ${fmt(cost)} (limp) ou aumente`,`Como ${st}, mãos boas mas não premium entram pagando para controlar o pote. (Um TAG aumentaria para ${fmt(openSize)}.) ${nm} é top ${pct(hp)}; seu range do ${pos} é top ${pct(openP)}.`,openSize);
       return R_('raise',['raise'],`AUMENTE para ${fmt(openSize)} (open-raise)`,`Estilo ${st}: do ${pos} você abre o top ${pct(openP)} das mãos. ${nm} é top ${pct(hp)} → open-raise de ${mtt?'2,2':'2,5'} BB${lp?' + 1 BB por limper':''}. Entrar aumentando dá iniciativa e chance de ganhar sem showdown.`,openSize);
@@ -296,7 +310,7 @@ function renderCoach(){
     h+=`<h4>🏆 Situação no torneio</h4><div>Stack efetivo <b>${(effStack(p)/BB).toFixed(1)} BB</b> · M <b style="color:${zc}">${M.toFixed(1)} (zona ${zn})</b></div><div class="muted">${zt}</div>`;
     if(bub>0) h+=`<div class="rec f" style="margin-top:6px"><b>🫧 Bolha / ICM:</b> perder agora custa mais do que dobrar ganha. Evite all-ins marginais; quem tem stack grande vai te pressionar.</div>`;
     else if(bub<0) h+=`<div class="rec" style="margin-top:6px"><b>🫧 Bolha:</b> você tem stack grande — pressione os stacks médios, eles não podem pagar sem mão forte.</div>`;}
-  h+=`<h4>📍 Sua posição: ${pos} ${r.ip&&S.street>0?'(em posição ✓)':S.street>0?'(fora de posição)':''}</h4><div>${POSINFO[pos]||''}</div>`;
+  h+=`<h4>📍 Sua posição: ${pos} ${r.ip&&S.street>0?'(em posição ✓)':S.street>0?'(fora de posição)':''}</h4><div>${posInfo(pos)}</div>`;
   const nm=notation(p.hole), nick=NICK[nm]||NICK[nm.slice(0,2)];
   h+=`<h4>🃏 Sua mão</h4>`;
   if(S.street===0){const ch=chen(p.hole),[tn,tc]=tier(ch);
@@ -360,7 +374,7 @@ function cardHTML(c,hidden,sm){if(hidden) return `<div class="card back ${sm?'sm
   return `<div class="card ${su(c)===1||su(c)===2?'red':''} ${sm?'sm':''}"><span>${RDISP(rk(c))}</span><b>${SUITS[su(c)]}</b></div>`;}
 function render(){
   let h='';
-  S.players.forEach((p,i)=>{const [x,y]=SEATPOS[i];
+  S.players.forEach((p,i)=>{const [x,y]=seatPos()[i];
     if(p.empty){h+=`<div class="seat empty" style="left:${x}%;top:${y}%"><div class="box">Lugar vazio</div></div>`;return;}
     const show=p.isHero||(S.xray&&S.mode==='learn')||(S.showdown&&!p.folded);
     const cards=(p.hole||[]).length&&!(p.folded&&!p.isHero)?p.hole.map(c=>cardHTML(c,!show,!p.isHero)).join(''):'';
@@ -373,7 +387,7 @@ function render(){
         <div class="act">${p.lastAction||''}</div></div></div>`;
     if(p.bet>0){const k=MQ_PHONE.matches?.22:.45,bx=x+(50-x)*k,by=y+(46-y)*k;h+=`<div class="chip" style="left:${bx}%;top:${by}%">${fmt(p.bet)}</div>`;}
   });
-  $('#seats').innerHTML=h;
+  $('#seats').innerHTML=h; $('.table-wrap').classList.toggle('n9',N>6);
   let b=S.board.map(c=>cardHTML(c)).join(''); for(let k=S.board.length;k<5;k++) b+='<div class="slot"></div>';
   $('#board').innerHTML=b; $('#pot').textContent='Pote: '+fmt(potTotal());
   if(S.game==='cash') $('.felt .brand').textContent="POKER LAB · NL HOLD'EM 1/2";
@@ -469,7 +483,15 @@ $('#gameSeg').onclick=e=>{const g=e.target.dataset.g;if(!g)return;
   if(g==='mtt'){ $('#tdlg').showModal(); return; }
   if(S.game==='mtt'&&!(T.heroOut||T.finished)&&!confirm('Abandonar o torneio e voltar para o cash game?')) return;
   if(S.game==='mtt') leaveTournament();};
-$('#bTStart').onclick=()=>{ $('#tdlg').close(); if($('#rdlg').open) $('#rdlg').close(); startTournament(+$('#tField').value,+$('#tSpeed').value); };
+try{const sv=+localStorage.getItem('pokerlab-seats'); if(sv===9) buildCashTable(9);}catch(e){}
+const FIELDS={6:[[6,'Sit & Go — 6 jogadores (1 mesa)'],[18,'Torneio pequeno — 18 jogadores'],[36,'Open — 36 jogadores'],[72,'Grande Open — 72 jogadores']],
+  9:[[9,'Sit & Go — 9 jogadores (1 mesa)'],[27,'Torneio pequeno — 27 jogadores'],[54,'Open — 54 jogadores'],[90,'Grande Open — 90 jogadores']]};
+function fillFields(){const f=FIELDS[+$('#tSeats').value]; $('#tField').innerHTML=f.map(([v,t],k)=>`<option value="${v}"${k===2?' selected':''}>${t}</option>`).join('');}
+$('#tSeats').onchange=fillFields; $('#tSeats').value=String(N); fillFields();
+$('#bTStart').onclick=()=>{ $('#tdlg').close(); if($('#rdlg').open) $('#rdlg').close(); startTournament(+$('#tField').value,+$('#tSpeed').value,+$('#tSeats').value); };
+$('#tableSize').value=String(N);
+$('#tableSize').onchange=e=>{ if(S.game==='mtt'){e.target.value=String(N);return;}
+  S.handNo++; S.handOver=true; clearTimeout(S.autoT); buildCashTable(+e.target.value); try{localStorage.setItem('pokerlab-seats',N);}catch(x){} $('#tSeats').value=String(N); fillFields(); log(`🪑 Mesa de <b>${N} lugares</b>.`); startHand(); };
 $('#bSimEnd').onclick=()=>simulateToEnd();
 $('#bNewT').onclick=()=>{ $('#rdlg').close(); $('#tdlg').showModal(); };
 $('#bToCash').onclick=()=>{ $('#rdlg').close(); leaveTournament(); };

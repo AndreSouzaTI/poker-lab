@@ -3,9 +3,11 @@
 "use strict";
 
 /* % das mãos para abrir (open-raise) por posição — referência de regulares 6-max */
-const OPEN_PCT={UTG:.17,MP:.21,CO:.28,BTN:.45,SB:.38,BB:.3};
+const OPEN_PCT={UTG:.17,'UTG+1':.15,MP:.21,LJ:.19,HJ:.23,CO:.28,BTN:.45,SB:.38,BB:.3};
+/* mesa cheia (8-9 jogadores): quem fala primeiro abre menos */
+function openPct(pos){const full=typeof S!=='undefined'&&S.players&&S.players.filter(x=>!x.empty).length>=8; return (full&&pos==='UTG')?.12:(OPEN_PCT[pos]||.25);}
 /* % das mãos para all-in (push) com ~10 BB, por posição (aprox. de tabelas Nash) */
-const PUSH_PCT={UTG:.14,MP:.18,CO:.26,BTN:.40,SB:.55,BB:.5};
+const PUSH_PCT={UTG:.14,'UTG+1':.15,MP:.18,LJ:.19,HJ:.22,CO:.26,BTN:.40,SB:.55,BB:.5};
 
 /* Perfis dos adversários (torneio). loose = largura dos ranges, aggr = agressividade, call = vontade de pagar */
 const PROFILES={
@@ -40,7 +42,7 @@ function noteRange(p,i,d){
   if(d.type==='raise'){
     const n=S.raises+1, allin=d.to>=p.bet+p.stack;
     if(allin&&effBB<=15) setRange(p,(PUSH_PCT[pos]||.3)*10/Math.max(effBB,2)*loose,`all-in com ${effBB.toFixed(0)} BB`);
-    else if(n===1) setRange(p,(OPEN_PCT[pos]||.25)*loose,`abriu do ${pos}`);
+    else if(n===1) setRange(p,openPct(pos)*loose,`abriu do ${pos}`);
     else if(n===2) setRange(p,.075*loose,'fez 3-bet');
     else setRange(p,.035,'fez 4-bet+');
   } else if(d.type==='call'){
@@ -90,7 +92,7 @@ function proDecide(p){
     if(S.raises===0){
       const lp=limpers();
       if(pos==='BB'&&toCall===0){ if(hp<=.1*c.aggr||(lp&&hp<=.14*c.aggr)) return raiseTo(BB*(3.5+lp)); return {type:'check'}; }
-      let openP=(OPEN_PCT[pos]||.25)*c.loose*(heads?1.7:1); if(lp) openP*=.75;
+      let openP=openPct(pos)*c.loose*(heads?1.7:1); if(lp) openP*=.75;
       if(hp<=openP) return raiseTo(BB*(effBB>40?2.5:2.2)+lp*BB);
       if(c.limp&&hp<=Math.min(.7,openP*1.8)) return call;
       if(pos==='SB'&&hp<=.55&&c.limp) return call;

@@ -25,16 +25,17 @@ function shuffled(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floo
 function emptySeat(){return {empty:true,name:'',stack:0,hole:[],bet:0,total:0,folded:true,allIn:false,acted:true,lastAction:''};}
 
 function payoutTable(field){
-  const paid=field<=6?2:field<=18?3:Math.round(field*.14), pool=field*BUYIN;
+  const paid=field<=9?2:field<=18?3:Math.round(field*.14), pool=field*BUYIN;
   const w=[...Array(paid)].map((_,k)=>1/(k+1)), sw=w.reduce((a,b)=>a+b,0);
   const pr=w.map(x=>Math.floor(pool*x/sw)); pr[0]+=pool-pr.reduce((a,b)=>a+b,0); return pr;
 }
 function setLevel(){const L=LEVELS[Math.min(T.level,LEVELS.length-1)]; SBL=L[0]; BB=L[1]; ANTE=L[2];}
 function nextLevelTxt(){const L=LEVELS[Math.min(T.level+1,LEVELS.length-1)]; return `${fmt(L[0])}/${fmt(L[1])}${L[2]?' ('+fmt(L[2])+')':''}`;}
 
-function startTournament(field,hpl){
+function startTournament(field,hpl,seats){
   S.handNo++; S.handOver=true; clearTimeout(S.autoT);
-  if(S.game==='cash'){S.cashSeats=S.players; hero.cashStack=hero.stack;}
+  if(S.game==='cash'){S.cashSeats=S.players; hero.cashStack=hero.stack; S.cashN=N;}
+  N=seats||N; $('#tableSize').value=String(N);
   S.game='mtt';
   Object.assign(T,{active:true,field,hpl,level:0,inLevel:0,elim:[],heroOut:false,finished:false,fast:false,flags:{},
     payouts:payoutTable(field),movedHero:false,bustBy:null});
@@ -43,9 +44,9 @@ function startTournament(field,hpl){
   hero.stack=T_START; hero.out=false; hero.place=0;
   const bots=[...Array(field-1)].map((_,k)=>{const cfg=randomProfile();return {name:names[k],cfg,style:cfg.style,stack:T_START,out:false};});
   T.players=[hero,...bots];
-  S.players=[hero,...bots.slice(0,5)]; while(S.players.length<N) S.players.push(emptySeat());
-  T.tables=[]; const rest=bots.slice(5);
-  for(let k=0;k<rest.length;k+=6) T.tables.push({id:T.tables.length+2,seats:rest.slice(k,k+6),btn:Math.floor(Math.random()*6)});
+  S.players=[hero,...bots.slice(0,N-1)]; while(S.players.length<N) S.players.push(emptySeat());
+  T.tables=[]; const rest=bots.slice(N-1);
+  for(let k=0;k<rest.length;k+=N){const st=rest.slice(k,k+N); while(st.length<N) st.push(null); T.tables.push({id:T.tables.length+2,seats:st,btn:Math.floor(Math.random()*N)});}
   S.dealer=Math.floor(Math.random()*N); setLevel();
   $('#log').innerHTML='';
   log(`🏆 <b>Torneio começou!</b> ${field} jogadores, ${T.tables.length+1} mesas, ${fmt(T_START)} fichas (${T_START/BB} BB). Premiação: ${T.paid} lugares.`);
@@ -54,7 +55,7 @@ function startTournament(field,hpl){
 function leaveTournament(){
   S.handNo++; S.handOver=true; clearTimeout(S.autoT);
   T.active=false; S.game='cash'; BB=2; SBL=1; ANTE=0;
-  S.players=S.cashSeats||S.players; hero.stack=hero.cashStack||START; hero.out=false;
+  N=S.cashN||N; $('#tableSize').value=String(N); S.players=S.cashSeats||S.players; hero.stack=hero.cashStack||START; hero.out=false;
   syncGameUI(); startHand();
 }
 
@@ -97,11 +98,11 @@ function tableList(){const L=T.tables.map(t=>({t,n:t.seats.filter(Boolean).lengt
 function addTo(t,p){ if(t==='hero'){const i=S.players.findIndex(x=>x.empty); S.players[i]=p;} else t.seats[t.seats.indexOf(null)]=p; }
 function removeFrom(t,p){ if(t==='hero') S.players[S.players.indexOf(p)]=emptySeat(); else t.seats[t.seats.indexOf(p)]=null; }
 function balance(){
-  const need=Math.ceil(T.remaining()/6);
+  const need=Math.ceil(T.remaining()/N);
   while(T.tables.length&&tableList().length>need){
     const br=T.tables.slice().sort((a,b)=>a.seats.filter(Boolean).length-b.seats.filter(Boolean).length)[0];
     T.tables.splice(T.tables.indexOf(br),1);
-    br.seats.filter(Boolean).forEach(p=>{const tg=tableList().filter(x=>x.n<6).sort((a,b)=>a.n-b.n)[0]; if(!tg) return; addTo(tg.t,p);
+    br.seats.filter(Boolean).forEach(p=>{const tg=tableList().filter(x=>x.n<N).sort((a,b)=>a.n-b.n)[0]; if(!tg) return; addTo(tg.t,p);
       if(tg.t==='hero'&&!T.fast) log(`🪑 <b>${p.name}</b> (${fmt(p.stack)}) chegou da mesa ${br.id} e sentou na sua mesa.`);});
     if(!T.fast) log(`🔨 Mesa ${br.id} foi quebrada. Restam ${tableList().length} mesa(s).`);
   }
@@ -134,7 +135,7 @@ function announce(){
   const R=T.remaining(), f=T.flags;
   if(!f.bubble&&R===T.paid+1){f.bubble=true; log(`🫧 <b>BOLHA!</b> O próximo eliminado sai sem prêmio. Hora do ICM: stacks médios devem evitar all-ins marginais.`); $('#msg').textContent='🫧 Bolha! O próximo a cair não ganha nada.';}
   if(!f.itm&&R<=T.paid){f.itm=true; log(`💰 <b>A bolha estourou!</b> Todos os ${R} restantes estão na premiação (ITM).`); $('#msg').textContent='💰 Bolha estourou: você está ITM!'; if(!T.heroOut) SFX.win();}
-  if(!f.ft&&!T.heroOut&&T.tables.length===0&&R>1&&R<=6){f.ft=true; log(`🏆 <b>MESA FINAL!</b> ${R} jogadores disputando ${money(T.payouts[0])}.`); $('#msg').textContent='🏆 MESA FINAL!';}
+  if(!f.ft&&!T.heroOut&&T.tables.length===0&&R>1&&R<=N){f.ft=true; log(`🏆 <b>MESA FINAL!</b> ${R} jogadores disputando ${money(T.payouts[0])}.`); $('#msg').textContent='🏆 MESA FINAL!';}
 }
 function finishTournament(){
   const w=T.players.find(p=>!p.out); if(w){w.place=1;w.prize=T.payouts[0];w.out=true;T.elim.unshift({name:w.name,place:1,prize:w.prize});}
@@ -147,7 +148,7 @@ function recordResult(){
 }
 function simulateToEnd(){
   if(!T.movedHero){const bots=S.players.filter(p=>!p.empty&&!p.isHero);
-    if(bots.length) T.tables.push({id:1,seats:[...bots,...Array(6-bots.length).fill(null)],btn:0});
+    if(bots.length) T.tables.push({id:1,seats:[...bots,...Array(N-bots.length).fill(null)],btn:0});
     S.players=S.players.map(p=>p.isHero?p:emptySeat()); T.movedHero=true;}
   T.fast=true; let g=0;
   while(T.remaining()>1&&g++<100000){T.tables.forEach(simTableHand); T.inLevel++; if(T.inLevel>=T.hpl){T.level++;T.inLevel=0;setLevel();} balance();}

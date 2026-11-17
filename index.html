@@ -19,6 +19,9 @@
   </div>
   <button class="btn menu-btn" id="bMenu" aria-expanded="false" aria-controls="hopts" title="Opções">⚙ Opções</button>
   <div id="hopts">
+  <label class="chk" title="Quantos lugares na mesa de cash (no torneio, escolha ao criar)">Mesa
+    <select id="tableSize" class="btn" style="padding:4px 6px"><option value="6">6-max</option><option value="9">9 jogadores</option></select>
+  </label>
   <label class="chk coach-only">Estilo para aprender
     <select id="coachStyle" class="btn" style="padding:4px 6px">
       <option value="tag">TAG (Tight-Agressivo)</option>
@@ -109,6 +112,11 @@
   <div class="dlg-b">
     <p>Simulação de um torneio de verdade: todos começam com <b>10.000 fichas (100 BB)</b>, os blinds sobem a cada nível (com <b>ante</b> a partir do nível 3), mesas são quebradas e balanceadas, existe a <b>bolha</b>, a <b>premiação</b> e a <b>mesa final</b>. Os adversários usam a IA profissional (ranges por posição, push/fold, c-bet, pressão de bolha) com perfis variados: regulares TAG/LAG, nits, recreativos e maníacos.</p>
     <div class="row" style="display:flex;gap:16px;flex-wrap:wrap">
+      <label class="chk">Lugares por mesa
+        <select id="tSeats" class="btn">
+          <option value="6">6-max</option>
+          <option value="9">9 jogadores (mesa cheia)</option>
+        </select></label>
       <label class="chk">Tamanho
         <select id="tField" class="btn">
           <option value="6">Sit &amp; Go — 6 jogadores (1 mesa)</option>

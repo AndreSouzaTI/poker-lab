@@ -191,3 +191,19 @@ dialog{max-height:92dvh}
   .seat.hero .box{display:flex;gap:6px;align-items:baseline;justify-content:center;flex-wrap:wrap}
   .center{top:44%}
 }
+
+/* ===== Mesa de 9 lugares ===== */
+.table-wrap.n9 .seat:not(.hero){width:116px;font-size:11px}
+.table-wrap.n9 .seat .sty{display:none}
+.table-wrap.n9 .seat .cards .card{width:30px;height:42px}
+.table-wrap.n9 .seat .cards .card span{font-size:12px}.table-wrap.n9 .seat .cards .card b{font-size:13px}
+@media(max-width:640px){
+  .table-wrap.n9{aspect-ratio:3/4}
+  .table-wrap.n9 .seat:not(.hero){width:68px;font-size:10px}
+  .table-wrap.n9 .seat:not(.hero) .nm{font-size:10px}
+  .table-wrap.n9 .seat .cards .card{width:22px;height:31px}
+  .table-wrap.n9 .seat .cards .card span{font-size:9px}.table-wrap.n9 .seat .cards .card b{font-size:10px}
+  .table-wrap.n9 .slot,.table-wrap.n9 .board .card{width:32px;height:45px}
+  .table-wrap.n9 .pos{font-size:8px;padding:1px 4px}
+  .table-wrap.n9 .msg{font-size:11px}
+}
