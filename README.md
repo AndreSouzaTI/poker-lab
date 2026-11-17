@@ -32,6 +32,7 @@ A simulated multi-table tournament, from the opening level to the final table:
 - **Living tournament:** the other tables are simulated hand by hand (all-ins use real cards), players bust, **tables break and get balanced**, and new opponents sit at your table
 - **Bubble, ITM and final table**, a payout table (≈14% of the field paid) and a final ranking
 - If you bust, you can **simulate the rest** and see who won
+- **Action clock:** 30 s per decision (or 45 s / 60 s / off), a countdown bar with beeps in the last 5 seconds, automatic check/fold when time runs out, and **5 time extensions of +30 s** (button or `T`). The bots also think at different speeds, longer on big decisions. The clock pauses while a dialog is open
 - A final screen with your **finishing place**; a **trophy and fireworks** if you finish in the top 3
 - Your tournament history: played, ITM %, best finish and profit
 

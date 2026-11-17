@@ -2,7 +2,7 @@
 "use strict";
 (function(){
   const KEY='pokerlab-lobby', lb=$('#lobby');
-  const L=Object.assign({name:'',game:'cash',seats:6,stake:0,esc:15,field:36,speed:10,mode:'learn',style:S.coachStyle||'tag'},(()=>{try{return JSON.parse(localStorage.getItem(KEY))||{};}catch(e){return {};}})());
+  const L=Object.assign({name:'',game:'cash',seats:6,stake:0,esc:15,field:36,speed:10,clock:30,mode:'learn',style:S.coachStyle||'tag'},(()=>{try{return JSON.parse(localStorage.getItem(KEY))||{};}catch(e){return {};}})());
   if(!COACH_STYLES[L.style]) L.style='tag';
   let started=false;
 
@@ -21,7 +21,7 @@
     $('#lbStake').value=String(Math.min(L.stake,8)); $('#lbEsc').value=String(L.esc);
     const f=FIELDS[L.seats]; if(!f.some(x=>x[0]===L.field)) L.field=f[2][0];
     $('#lbField').innerHTML=f.map(([v,t])=>`<option value="${v}">${t}</option>`).join(''); $('#lbField').value=String(L.field);
-    $('#lbSpeed').value=String(L.speed); $('#lbStyle').value=L.style;
+    $('#lbSpeed').value=String(L.speed); $('#lbClock').value=String(L.clock); $('#lbStyle').value=L.style;
     const best=ST.tourneys&&ST.tourneys.length?Math.min(...ST.tourneys.map(t=>t.place)):0;
     $('#lbStats').textContent=ST.hands?`Você já jogou ${ST.hands} mãos${ST.tourneys&&ST.tourneys.length?` e ${ST.tourneys.length} torneio(s) (melhor: ${best}º)`:''}.`:'Primeira vez aqui? Escolha acima e toque em Jogar.';
   }
@@ -39,6 +39,7 @@
   $('#lbEsc').onchange=e=>{L.esc=+e.target.value;};
   $('#lbField').onchange=e=>{L.field=+e.target.value;};
   $('#lbSpeed').onchange=e=>{L.speed=+e.target.value;};
+  $('#lbClock').onchange=e=>{L.clock=+e.target.value;};
   $('#lbStyle').onchange=e=>{L.style=e.target.value;};
 
   function begin(){
@@ -54,7 +55,7 @@
       $('#tableSize').value=String(N); $('#tSeats').value=String(N); fillFields();
       $('#log').innerHTML=''; syncGameUI(); startHand();
     } else {
-      $('#tSeats').value=String(L.seats); fillFields(); startTournament(L.field,L.speed,L.seats);
+      $('#tSeats').value=String(L.seats); fillFields(); $('#tClock').value=String(L.clock); startTournament(L.field,L.speed,L.seats);
     }
   }
   $('#lbForm').addEventListener('submit',e=>{

@@ -260,3 +260,16 @@ dialog{max-height:92dvh}
   .table-wrap.n9 .seat.hero .cards .card{width:46px;height:64px}
   .table-wrap.n9 .seat.hero .cards .card span{font-size:18px}.table-wrap.n9 .seat.hero .cards .card b{font-size:20px}
 }
+
+/* ===== Relógio de ação (torneio) ===== */
+.shot{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.shot[hidden]{display:none}
+.shot-t{font-weight:800;font-variant-numeric:tabular-nums;min-width:58px;font-size:15px}
+.shot-bar{flex:1;height:10px;background:#30363d;border-radius:6px;overflow:hidden}
+.shot-bar i{display:block;height:100%;width:100%;background:var(--green);transition:width .12s linear,background-color .3s}
+.shot.warn .shot-bar i{background:var(--gold)}
+.shot.crit .shot-bar i{background:var(--red)}
+.shot.crit .shot-t{color:var(--red)}
+.shot.crit #bBank:not(:disabled){border-color:var(--gold);color:var(--gold)}
+#bBank small{opacity:.8}
+.lb-wide{grid-column:1/-1}

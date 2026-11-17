@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Poker Lab</title>
-<link rel="stylesheet" href="css/styles.css?v=1.4.1">
+<link rel="stylesheet" href="css/styles.css?v=1.5.0">
 </head>
 <body>
 <header>
@@ -82,6 +82,11 @@
       <div id="seats"></div>
     </div>
     <div class="controls">
+      <div class="shot" id="shot" hidden>
+        <span class="shot-t" id="shotT" aria-live="off">⏱ 30 s</span>
+        <div class="shot-bar" id="shotBar" aria-hidden="true"><i></i></div>
+        <button class="btn" id="bBank" type="button" title="Pedir mais tempo (extensão de tempo). Atalho: T">＋30 s <small>(<span id="bankN">5</span>)</small></button>
+      </div>
       <div class="info" id="ctlInfo"></div>
       <div class="row">
         <button class="ab fold" id="bFold">Fold<kbd>F</kbd></button>
@@ -149,6 +154,9 @@
       <label class="lb-field"><span>Tamanho do torneio</span><select id="lbField" class="btn"></select></label>
       <label class="lb-field"><span>Velocidade dos blinds</span>
         <select id="lbSpeed" class="btn"><option value="6">Turbo (6 mãos)</option><option value="10">Normal (10 mãos)</option><option value="15">Deep (15 mãos)</option></select></label>
+      <label class="lb-field lb-wide"><span>Relógio de ação</span>
+        <select id="lbClock" class="btn"><option value="30">30 s por decisão (padrão)</option><option value="45">45 s</option><option value="60">60 s (iniciante)</option><option value="0">Sem relógio</option></select>
+        <small class="muted">Cada decisão tem tempo limite; se acabar, check ou fold automático. Você tem 5 extensões de +30 s (tecla T).</small></label>
     </div>
 
     <div class="lb-field"><span>Como quer jogar</span>
@@ -204,6 +212,8 @@
           <option value="15">Deep (a cada 15 mãos)</option>
         </select></label>
     </div>
+    <label class="chk" style="margin-top:10px">Relógio de ação
+      <select id="tClock" class="btn"><option value="30">30 s por decisão (padrão)</option><option value="45">45 s</option><option value="60">60 s (iniciante)</option><option value="0">Sem relógio</option></select></label>
     <p class="muted">Buy-in e prêmios são fictícios ($100 por jogador), só para treino. Dica: no modo Aprendizado o coach ensina push/fold, M e ICM.</p>
     <button class="btn big" id="bTStart">Começar torneio ▶</button>
   </div>
@@ -223,11 +233,11 @@
 
 <canvas id="fx" popover="manual" aria-hidden="true"></canvas>
 
-<script src="js/engine.js?v=1.4.1"></script>
-<script src="js/audio.js?v=1.4.1"></script>
-<script src="js/ai.js?v=1.4.1"></script>
-<script src="js/tournament.js?v=1.4.1"></script>
-<script src="js/game.js?v=1.4.1"></script>
-<script src="js/lobby.js?v=1.4.1"></script>
+<script src="js/engine.js?v=1.5.0"></script>
+<script src="js/audio.js?v=1.5.0"></script>
+<script src="js/ai.js?v=1.5.0"></script>
+<script src="js/tournament.js?v=1.5.0"></script>
+<script src="js/game.js?v=1.5.0"></script>
+<script src="js/lobby.js?v=1.5.0"></script>
 </body>
 </html>

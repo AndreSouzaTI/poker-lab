@@ -73,6 +73,7 @@ function log(h){const d=document.createElement('div');d.innerHTML=h;const L=$('#
 
 /* ============ FLUXO DA MÃO ============ */
 function startHand(){
+  clockStop();
   if(S.game==='mtt'&&(T.heroOut||T.finished)) return showResult();
   clearTimeout(S.autoT);
   S.handNo++; const lvTxt=cashTick(); S.handOver=false; S.showdown=false; S.reveal=false; S.uncontested=false; S.board=[]; S.street=0; S.raises=0; S.pfAggr=-1; S.lastAggr=-1; S.decisions=[]; S.rec=null;
@@ -110,10 +111,51 @@ function loop(){
     render(); setTimeout(()=>{if(hid===S.handNo&&!S.handOver)nextStreet();},runout?Math.max(1100,delay()*1.5):Math.max(350,delay()*.8)); return; }
   const p=S.players[S.toAct];
   if(p.folded||p.allIn){S.toAct=next(S.toAct);return loop();}
-  if(p.isHero){ S.rec=advise(); render(); renderCoach(); SFX.turn(); return; }
+  if(p.isHero){ S.rec=advise(); render(); renderCoach(); SFX.turn(); clockStart(); return; }
   render();
   const hid=S.handNo;
-  setTimeout(()=>{ if(hid!==S.handNo||S.handOver) return; act(p,botDecide(p)); },delay());
+  setTimeout(()=>{ if(hid!==S.handNo||S.handOver) return; act(p,botDecide(p)); },S.game==='mtt'?thinkTime(p):delay());
+}
+/* ---- relógio de ação (torneio): 30 s por decisão + extensões de tempo, como nos torneios ao vivo ---- */
+const CLOCK={secs:30,bank:5,extra:30,left:5,t:0,max:30,on:false,id:0,hid:0,lastBeep:99};
+function thinkTime(p){   // bots pensam em ritmos diferentes; decisões grandes demoram mais
+  const d=delay(), toCall=S.currentBet-p.bet, big=toCall>potTotal()*.5||toCall>=p.stack;
+  return d*(.55+Math.random()*1.1)+(big?d*(.6+Math.random()*1.2):0);
+}
+function clockStart(){
+  if(S.game!=='mtt'||!CLOCK.secs) return clockStop();
+  clearInterval(CLOCK.id); CLOCK.on=true; CLOCK.t=CLOCK.secs; CLOCK.max=CLOCK.secs; CLOCK.hid=S.handNo; CLOCK.lastBeep=99;
+  CLOCK.id=setInterval(clockTick,100); renderClock();
+}
+function clockStop(){ CLOCK.on=false; clearInterval(CLOCK.id); renderClock(); }
+function clockTick(){
+  if(!CLOCK.on) return;
+  if(CLOCK.hid!==S.handNo||S.handOver||!heroTurn()){ clockStop(); return; }
+  if(document.hidden||document.querySelector('dialog[open]')) return;    // pausa com diálogo aberto ou aba escondida
+  CLOCK.t-=.1;
+  const sec=Math.ceil(CLOCK.t);
+  if(sec<=5&&sec>=1&&sec<CLOCK.lastBeep){ CLOCK.lastBeep=sec; SFX.tick(); }
+  if(CLOCK.t<=0){
+    const toCall=S.currentBet-hero.bet; clockStop(); SFX.timeout();
+    log(`⏱ <b>Tempo esgotado!</b> ${toCall>0?'Sua mão foi descartada (fold).':'Check automático.'}`);
+    $('#msg').textContent='⏱ Tempo esgotado';
+    S.rec=null; act(hero,{type:toCall>0?'fold':'check'}); return;
+  }
+  renderClock();
+}
+function useExtension(){
+  if(!CLOCK.on||CLOCK.left<=0) return;
+  CLOCK.left--; CLOCK.t+=CLOCK.extra; CLOCK.max=Math.max(CLOCK.t,CLOCK.secs); CLOCK.lastBeep=99; SFX.chips(0,3);
+  log(`⏱ Extensão de tempo usada: +${CLOCK.extra} s (restam ${CLOCK.left}).`); renderClock();
+}
+function renderClock(){
+  const el=$('#shot'); if(!el) return;
+  if(!CLOCK.on){ el.hidden=true; return; }
+  el.hidden=false; const t=Math.max(0,CLOCK.t);
+  $('#shotT').textContent='⏱ '+Math.ceil(t)+' s';
+  $('#shotBar i').style.width=Math.max(0,Math.min(100,t/CLOCK.max*100))+'%';
+  el.classList.toggle('warn',t<=10&&t>5); el.classList.toggle('crit',t<=5);
+  $('#bankN').textContent=CLOCK.left; $('#bBank').disabled=CLOCK.left<=0;
 }
 function act(p,d){
   const i=S.players.indexOf(p), toCall=S.currentBet-p.bet;
@@ -402,6 +444,7 @@ function mistakeLabel(rec,did,street){
 const DIDTXT={fold:'Fold',check:'Check',call:'Call',raise:'Aposta/Aumento'};
 function heroAct(type,to){
   if(S.handOver||S.toAct!==0) return;
+  clockStop();
   const r=S.rec;
   if(r){const good=r.ok.includes(type); ST.dec++; if(good)ST.good++; else{const l=mistakeLabel(r.action,type,S.street);ST.mist[l]=(ST.mist[l]||0)+1;}
     S.decisions.push({street:S.street,did:DIDTXT[type],rec:r.title,good}); saveStats();}
@@ -527,6 +570,7 @@ $('#bFold').onclick=()=>heroAct('fold');
 $('#bCall').onclick=()=>heroAct(S.currentBet-hero.bet>0?'call':'check');
 $('#bRaise').onclick=()=>heroAct('raise',+$('#amt').value);
 $('#bNext').onclick=()=>{if(S.handOver)startHand();};
+$('#bBank').onclick=useExtension;
 $('#bShow').onclick=()=>{ if(!(S.handOver&&S.uncontested&&hero.winner)||hero.shown) return; hero.shown=true; hero.lastAction='Mostrou';
   log(`👁 <b>Você</b> mostrou as cartas: ${cardsTxtOf(hero)} (${notation(hero.hole).replace(/T/g,'10')})`); SFX.flip(); render(); };
 $('#rng').oninput=e=>{$('#amt').value=e.target.value;setRaiseLabel();};
@@ -567,6 +611,7 @@ document.addEventListener('keydown',e=>{
   if(k==='f'&&!$('#bFold').disabled) $('#bFold').click();
   else if(k==='c'&&!$('#bCall').disabled) $('#bCall').click();
   else if(k==='r'&&!$('#bRaise').disabled) $('#bRaise').click();
+  else if(k==='t'&&CLOCK.on) useExtension();
   else if((k===' '||k==='enter')&&S.handOver){e.preventDefault();startHand();}
 });
 function saveAudio(){try{localStorage.setItem('pokerlab-audio',JSON.stringify({on:AU.on,vol:AU.vol}));}catch(e){}}

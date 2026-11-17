@@ -27,6 +27,8 @@ const SFX={
   win:()=>{[523,659,784,1047].forEach((f,i)=>tone(f,.28,'triangle',.2,i*.1));SFX.chips(.35,6);},
   lose:()=>{tone(392,.25,'sine',.18);tone(311,.4,'sine',.18,.22);},
   pot:()=>SFX.chips(0,5),
+  tick:()=>tone(1300,.05,'square',.08),
+  timeout:()=>{tone(220,.35,'sawtooth',.14,0,110);noise(.2,500,.8,.25);},
   boom:(w=0)=>{noise(.5,260+Math.random()*200,.7,.5,w);tone(120,.35,'sine',.35,w,40);noise(.25,3800,1.2,.18,w+.04);},
   fanfare:()=>{[523,659,784,1047,784,1047,1319].forEach((f,i)=>tone(f,.32,'triangle',.22,i*.13));SFX.chips(.8,8);},
 };

@@ -33,6 +33,7 @@ function setLevel(){const L=LEVELS[Math.min(T.level,LEVELS.length-1)]; SBL=L[0];
 function nextLevelTxt(){const L=LEVELS[Math.min(T.level+1,LEVELS.length-1)]; return `${fmt(L[0])}/${fmt(L[1])}${L[2]?' ('+fmt(L[2])+')':''}`;}
 
 function startTournament(field,hpl,seats){
+  CLOCK.secs=+($('#tClock')?$('#tClock').value:30); CLOCK.left=CLOCK.bank;
   S.handNo++; S.handOver=true; clearTimeout(S.autoT);
   if(S.game==='cash'){S.cashSeats=S.players; hero.cashStack=hero.stack; S.cashN=N;}
   N=seats||N; $('#tableSize').value=String(N);
