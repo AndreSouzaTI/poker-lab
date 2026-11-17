@@ -40,7 +40,21 @@
 </header>
 
 <main>
-  <section>
+  <aside class="side-l">
+    <div class="panel" id="tpanel" style="display:none">
+      <h3>🏆 Torneio</h3>
+      <div id="tbody"></div>
+    </div>
+    <div class="panel">
+      <h3>📜 Histórico da mão</h3>
+      <div id="log"></div>
+    </div>
+    <div class="panel">
+      <h3>📊 Suas estatísticas</h3>
+      <div id="stats"></div>
+    </div>
+  </aside>
+  <section class="center-col">
     <div class="table-wrap">
       <div class="felt"><div class="brand">POKER LAB · NL HOLD'EM 1/2</div></div>
       <div class="center">
@@ -69,11 +83,7 @@
     </div>
   </section>
 
-  <aside>
-    <div class="panel" id="tpanel" style="display:none">
-      <h3>🏆 Torneio</h3>
-      <div id="tbody"></div>
-    </div>
+  <aside class="side-r">
     <div class="panel coach-only" id="coach">
       <h3>🎓 Coach</h3>
       <div id="styleDesc" class="muted" style="font-size:12px;margin-bottom:8px"></div>
@@ -82,14 +92,6 @@
     <div class="panel coach-only" id="beat" style="display:none">
       <h3>⚔️ Mãos que te batem agora</h3>
       <div id="beatBody"></div>
-    </div>
-    <div class="panel">
-      <h3>📊 Suas estatísticas</h3>
-      <div id="stats"></div>
-    </div>
-    <div class="panel">
-      <h3>📜 Histórico da mão</h3>
-      <div id="log"></div>
     </div>
   </aside>
 </main>
