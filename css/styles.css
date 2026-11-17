@@ -273,3 +273,8 @@ dialog{max-height:92dvh}
 .shot.crit #bBank:not(:disabled){border-color:var(--gold);color:var(--gold)}
 #bBank small{opacity:.8}
 .lb-wide{grid-column:1/-1}
+
+/* ===== Ausentar-se (sit out) ===== */
+.away{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#2a2412;border:1px solid #6b5a1f;border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:13px}
+.away[hidden]{display:none}
+@media(max-width:640px){.away{flex-direction:column;align-items:stretch;text-align:left}}

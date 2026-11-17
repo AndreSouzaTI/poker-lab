@@ -76,6 +76,8 @@ function startHand(){
   clockStop();
   if(S.game==='mtt'&&(T.heroOut||T.finished)) return showResult();
   clearTimeout(S.autoT);
+  S.autoFold=false; $('#autoFold').checked=false;
+  hero.sat=!!S.sitOut;     // ausente: nesta mão você é descartado automaticamente (blinds/ante continuam)
   S.handNo++; const lvTxt=cashTick(); S.handOver=false; S.showdown=false; S.reveal=false; S.uncontested=false; S.board=[]; S.street=0; S.raises=0; S.pfAggr=-1; S.lastAggr=-1; S.decisions=[]; S.rec=null;
   S.players.forEach(p=>{ if(p.empty) return;
     if(S.game==='cash'&&p.stack<=0){ p.stack=cashBuyIn(); log(`<b>${p.name}</b> fez recompra (rebuy) de ${fmt(cashBuyIn())}.`); }
@@ -111,6 +113,11 @@ function loop(){
     render(); setTimeout(()=>{if(hid===S.handNo&&!S.handOver)nextStreet();},runout?Math.max(1100,delay()*1.5):Math.max(350,delay()*.8)); return; }
   const p=S.players[S.toAct];
   if(p.folded||p.allIn){S.toAct=next(S.toAct);return loop();}
+  if(p.isHero&&(S.autoFold||p.sat)){   // pré-ação "fold automático" (ou ausente): check se não houver aposta a pagar
+    const toCall=S.currentBet-p.bet, away=p.sat; S.autoFold=false; $('#autoFold').checked=false;
+    log(away?`💤 <b>Ausente</b>: ${toCall>0?'mão descartada (fold).':'check automático.'}`:`⚡ <b>Fold automático</b>: ${toCall>0?'você desistiu da mão.':'check (não havia aposta a pagar).'}`);
+    act(p,{type:toCall>0?'fold':'check'}); return;
+  }
   if(p.isHero){ S.rec=advise(); render(); renderCoach(); SFX.turn(); clockStart(); return; }
   render();
   const hid=S.handNo;
@@ -251,17 +258,17 @@ function showdown(){
 function endHand(sd){
   const net=hero.stack-hero.startStack, nm=notation(hero.hole);
   setTimeout(()=>{ if(hero.winner) SFX.win(); else if(net<0&&!hero.folded) SFX.lose(); else SFX.pot(); },250);
-  ST.hands++; ST.net+=net/BB*2; if(net>0)ST.won++; if(hero.vp)ST.vpip++; if(hero.pr)ST.pfr++;   // saldo guardado em "fichas de cash" (1 BB = 2)
-  ST.byHand[nm]=(ST.byHand[nm]||0)+net/BB;
+  if(!hero.sat){ ST.hands++; ST.net+=net/BB*2; if(net>0)ST.won++; if(hero.vp)ST.vpip++; if(hero.pr)ST.pfr++; }   // mãos "ausente" não entram nas estatísticas; saldo em "fichas de cash" (1 BB = 2)
+  if(!hero.sat) ST.byHand[nm]=(ST.byHand[nm]||0)+net/BB;
   if(sd&&!hero.folded){ST.sd++; if(hero.winner)ST.sdWon++;
     else{const w=S.players.filter(p=>p.winner)[0];
       ST.losses.unshift(`Perdeu ${(-net/BB).toFixed(0)} BB com <b>${hero.handDesc}</b> (${nm}) para ${w.name} — <b>${w.handDesc}</b>`);
       ST.losses=ST.losses.slice(0,8);}}
-  saveStats(); renderReview(net,sd);
+  saveStats(); if(!hero.sat) renderReview(net,sd);
   if(S.game==='mtt') tourneyAfterHand();
   render();
   const over=S.game==='mtt'&&(T.heroOut||T.finished);
-  if($('#auto').checked&&!over) S.autoT=setTimeout(startHand,S.mode==='learn'?4500:2200);
+  if(($('#auto').checked||S.sitOut)&&!over) S.autoT=setTimeout(startHand,S.sitOut?1600:S.mode==='learn'?4500:2200);   // ausente: as mãos seguem sozinhas
 }
 
 /* ============ BOTS ============ */
@@ -471,7 +478,7 @@ function render(){
     h+=`<div class="seat ${p.isHero?'hero':''} ${p.folded?'folded':''} ${S.toAct===i&&!S.handOver?'turn':''} ${p.winner?'win':''}" style="left:${x}%;top:${y}%">
       <div class="cards">${cards}</div>
       <div class="box">${i===S.dealer?'<div class="dealer">D</div>':''}<div class="pos">${posName(i)}</div>
-        <div class="nm">${p.name}</div><div class="st">${fmt(p.stack)} <small>(${+(p.stack/BB).toFixed(1)} BB)</small></div>
+        <div class="nm">${p.name}${p.isHero&&S.sitOut?' 💤':''}</div><div class="st">${fmt(p.stack)} <small>(${+(p.stack/BB).toFixed(1)} BB)</small></div>
         ${!p.isHero&&S.mode==='learn'?`<div class="sty">${p.style}</div>`:''}
         ${p.handDesc&&S.showdown&&!p.folded?`<div class="hd">${p.handDesc}</div>`:''}
         ${S.reveal&&!S.showdown&&!p.folded&&p.eq!=null?`<div class="hd eq">${Math.round(p.eq*100)}%</div>`:''}
@@ -504,6 +511,8 @@ function updateControls(){
   $('#bRaise').disabled=!canRaise; $('#rng').disabled=!canRaise; $('#amt').disabled=!canRaise;
   const over=S.game==='mtt'&&(T.heroOut||T.finished);
   $('#bShow').style.display=(S.handOver&&S.uncontested&&hero.winner&&!hero.shown)?'':'none';
+  {const af=$('#autoFold'),can=!S.handOver&&!hero.folded&&!hero.allIn&&!hero.out; af.disabled=!can; if(!can){af.checked=false;S.autoFold=false;}}
+  {const aw=$('#away'); aw.hidden=!S.sitOut; $('#awayTxt').textContent=hero.sat?'Você está ausente: suas mãos são descartadas e os blinds continuam sendo cobrados.':'Você ficará ausente a partir da próxima mão.';}
   $('#bNext').disabled=!S.handOver; $('#bNext').innerHTML=over?'Ver resultado 🏆':'Próxima mão ▶ <kbd>Espaço</kbd>';
   if(on){
     const rng=$('#rng'); rng.min=minTo; rng.max=maxTo; rng.step=Math.max(1,SBL/2);
@@ -571,6 +580,18 @@ $('#bCall').onclick=()=>heroAct(S.currentBet-hero.bet>0?'call':'check');
 $('#bRaise').onclick=()=>heroAct('raise',+$('#amt').value);
 $('#bNext').onclick=()=>{if(S.handOver)startHand();};
 $('#bBank').onclick=useExtension;
+function setSitOut(on){
+  S.sitOut=on; $('#sitOut').checked=on;
+  if(on){ log('💤 Você ficará <b>ausente</b> a partir da próxima mão: ela é descartada automaticamente e os blinds continuam sendo cobrados. As mãos seguem sozinhas.');
+    if(S.handOver&&!(S.game==='mtt'&&(T.heroOut||T.finished))){ clearTimeout(S.autoT); S.autoT=setTimeout(startHand,1600); } }
+  else { log('✅ Você <b>voltou à mesa</b>.'); if(S.handOver&&!$('#auto').checked) clearTimeout(S.autoT); }
+  updateControls();
+}
+$('#sitOut').onchange=e=>setSitOut(e.target.checked);
+$('#bAway').onclick=()=>setSitOut(false);
+$('#autoFold').onchange=e=>{
+  if(e.target.checked&&heroTurn()){ e.target.checked=false; heroAct(S.currentBet-hero.bet>0?'fold':'check'); return; }   // já é a sua vez: age agora
+  S.autoFold=e.target.checked; if(S.autoFold){log('⚡ Fold automático marcado: quando chegar a sua vez, a mão será descartada.'); SFX.chips(0,1);} };
 $('#bShow').onclick=()=>{ if(!(S.handOver&&S.uncontested&&hero.winner)||hero.shown) return; hero.shown=true; hero.lastAction='Mostrou';
   log(`👁 <b>Você</b> mostrou as cartas: ${cardsTxtOf(hero)} (${notation(hero.hole).replace(/T/g,'10')})`); SFX.flip(); render(); };
 $('#rng').oninput=e=>{$('#amt').value=e.target.value;setRaiseLabel();};
@@ -601,8 +622,8 @@ $('#cStake').innerHTML=CASH_LEVELS.slice(0,9).map((l,k)=>`<option value="${k}">$
 $('#cStake').onchange=e=>applyCashStakes(+e.target.value);
 $('#cEsc').onchange=e=>{const v=+e.target.value; CASH.esc=v>0; if(v>0) CASH.hpl=v; CASH.inLv=0; try{localStorage.setItem('pokerlab-cashesc',v);}catch(x){} renderCash();};
 $('#bSimEnd').onclick=()=>simulateToEnd();
-$('#bNewT').onclick=()=>{ $('#rdlg').close(); $('#tdlg').showModal(); };
-$('#bToCash').onclick=()=>{ $('#rdlg').close(); leaveTournament(); };
+$('#bNewT').onclick=()=>{ $('#rdlg').close(); S.sitOut=false; $('#sitOut').checked=false; $('#tdlg').showModal(); };
+$('#bToCash').onclick=()=>{ $('#rdlg').close(); S.sitOut=false; $('#sitOut').checked=false; leaveTournament(); };
 $('#proBots').onchange=e=>{S.proBots=e.target.checked;};
 document.addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT'&&e.target.type==='number') return;

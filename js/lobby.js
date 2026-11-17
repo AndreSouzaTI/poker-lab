@@ -47,7 +47,7 @@
     hero.name=L.name||'Você';
     S.mode=L.mode; document.querySelectorAll('#modeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.m===L.mode)); document.body.classList.toggle('treino',L.mode==='treino');
     S.coachStyle=L.style; $('#coachStyle').value=L.style; try{localStorage.setItem('pokerlab-style',L.style);}catch(e){} renderStyleInfo();
-    S.handNo++; S.handOver=true; clearTimeout(S.autoT); started=true;
+    S.handNo++; S.handOver=true; clearTimeout(S.autoT); started=true; S.sitOut=false; $('#sitOut').checked=false;
     if(L.game==='cash'){
       if(S.game==='mtt'){T.active=false; S.game='cash';}
       CASH.esc=L.esc>0; if(L.esc>0) CASH.hpl=L.esc; CASH.inLv=0; setCashLevel(L.stake);

@@ -66,6 +66,8 @@ Hands, win rate, BB/100, VPIP, PFR, showdowns won, how often you agreed with the
 - 🔊 Sound effects synthesized in real time with the Web Audio API (no audio files)
 - 🩻 X-ray mode to see the bots' cards while learning
 - 📖 Glossary and hand-ranking table
+- ⚡ **Auto-fold:** don't like your cards? Tick it and the hand is folded when it's your turn (check if it's free). Resets every hand
+- 💤 **Sit out:** step away (bathroom, phone call…). Your hands are folded automatically, the blinds keep being posted, and hands keep running by themselves until you click *Voltar à mesa*. Those hands don't count in your stats
 - ⌨️ Shortcuts: `F` fold · `C` check/call · `R` raise · `Space` next hand
 
 ---
