@@ -524,6 +524,7 @@ function updateControls(){
   $('#bCall').innerHTML=(toCall>0?(toCall>=hero.stack?`All-in ${fmt(hero.stack)}`:`Pagar ${fmt(toCall)}`):'Check')+'<kbd>C</kbd>';
   const canRaise=on&&hero.stack>toCall&&othersCanAct;
   $('#bRaise').disabled=!canRaise; $('#rng').disabled=!canRaise; $('#amt').disabled=!canRaise;
+  $('#bAllin').disabled=!on; $('#bAllin').innerHTML='ALL-IN'+(on?' '+fmt(hero.stack):'')+'<kbd>A</kbd>';
   const over=S.game==='mtt'&&(T.heroOut||T.finished);
   $('#bShow').style.display=(S.handOver&&S.uncontested&&hero.winner&&!hero.shown)?'':'none';
   {const af=$('#autoFold'),can=!S.handOver&&!hero.folded&&!hero.allIn&&!hero.out; af.disabled=!can; if(!can){af.checked=false;S.autoFold=false;}}
@@ -593,6 +594,11 @@ $('#bGloss').onclick=()=>dlg.showModal();
 $('#bFold').onclick=()=>heroAct('fold');
 $('#bCall').onclick=()=>heroAct(S.currentBet-hero.bet>0?'call':'check');
 $('#bRaise').onclick=()=>heroAct('raise',+$('#amt').value);
+$('#bAllin').onclick=()=>{   // all-in direto: aumenta com tudo; se só dá para pagar, paga all-in
+  if(!heroTurn()) return;
+  const toCall=S.currentBet-hero.bet, canRaise=hero.stack>toCall&&S.players.some(p=>!p.isHero&&!p.folded&&!p.allIn);
+  heroAct(canRaise?'raise':'call',hero.bet+hero.stack);
+};
 $('#bNext').onclick=()=>{if(S.handOver)startHand();};
 $('#bBank').onclick=useExtension;
 function setSitOut(on){
@@ -647,6 +653,7 @@ document.addEventListener('keydown',e=>{
   if(k==='f'&&!$('#bFold').disabled) $('#bFold').click();
   else if(k==='c'&&!$('#bCall').disabled) $('#bCall').click();
   else if(k==='r'&&!$('#bRaise').disabled) $('#bRaise').click();
+  else if(k==='a'&&!$('#bAllin').disabled) $('#bAllin').click();
   else if(k==='t'&&CLOCK.on) useExtension();
   else if((k===' '||k==='enter')&&S.handOver){e.preventDefault();startHand();}
 });
